@@ -151,6 +151,10 @@ func (c *Client) GetServiceDB(ctx context.Context, token, orgID, serviceID, dbID
 	return &db, err
 }
 
+func (c *Client) GetServiceDBSchema(ctx context.Context, token, orgID, serviceID, dbID string) ([]byte, error) {
+	return c.getRaw(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/services/%s/dbs/%s", orgID, serviceID, dbID))
+}
+
 func (c *Client) ListServiceDiagrams(ctx context.Context, token, orgID, serviceID string) ([]ServiceDiagram, error) {
 	var resp struct {
 		Diagrams []ServiceDiagram `json:"diagrams"`
