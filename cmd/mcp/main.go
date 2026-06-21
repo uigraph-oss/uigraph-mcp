@@ -4,7 +4,9 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/uigraph/mcp/internal/apiclient"
 	"github.com/uigraph/mcp/internal/config"
+	mcphandler "github.com/uigraph/mcp/internal/mcp"
 	"github.com/uigraph/mcp/internal/server"
 )
 
@@ -17,9 +19,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = cfg // mcp server wired in Task B4
-	slog.Info("uigraph-mcp starting", "apiURL", cfg.UIGraphAPIURL)
-	if err := server.Run(cfg.Port, nil); err != nil {
+	client := apiclient.New(cfg.UIGraphAPIURL)
+	handler := mcphandler.New(cfg, client)
+
+	slog.Info("uigraph-mcp starting", "port", cfg.Port)
+	if err := server.Run(cfg.Port, handler); err != nil {
 		slog.Error("run error", "err", err)
 		os.Exit(1)
 	}
