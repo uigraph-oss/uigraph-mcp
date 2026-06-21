@@ -51,7 +51,12 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 	}
 	token := tokenFromCtx(ctx)
 
-	svcs, err := h.client.ListServices(ctx, token, orgID, nil, nil)
+	var folderID *string
+	if fid := req.GetString("folder_id", ""); fid != "" {
+		folderID = &fid
+	}
+
+	svcs, err := h.client.ListServices(ctx, token, orgID, folderID, nil)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
