@@ -33,11 +33,24 @@ Requires a running [uigraph-api](https://github.com/uigraph-oss/uigraph-api) ins
 | Variable | Default | Description |
 |---|---|---|
 | `UIGRAPH_API_URL` | — | Base URL of uigraph-api (required) |
+| `UIGRAPH_FRONTEND_URL` | — | Base URL of the UIGraph frontend, used for the login broker (required) |
+| `UIGRAPH_MCP_PUBLIC_URL` | — | Public base URL of this MCP server, used to build the auth callback (required) |
 | `PORT` | `8080` | HTTP listen port |
 | `MCP_SERVER_NAME` | `uigraph-mcp` | MCP server name |
 | `MCP_SERVER_VERSION` | `0.1.0` | MCP server version |
 
 For hot reload during development, see `Dockerfile.dev` and `.air.toml`.
+
+## Login broker
+
+The server brokers user login so the CLI client only needs the MCP server URL.
+
+| Endpoint | Description |
+|---|---|
+| `GET /auth/login?redirect_uri=&state=` | Stores the CLI callback + state, redirects the browser to `{UIGRAPH_FRONTEND_URL}/authorize` |
+| `GET /auth/callback?token=&state=` | Receives the token from the frontend and redirects back to the CLI's `redirect_uri?token=&state=` |
+
+Flow: `CLI → /auth/login → frontend /authorize → (user logs in) → /auth/callback → CLI`. The CLI then sends the returned token as `Authorization: Bearer`, which the server forwards to uigraph-api. Service accounts skip this and pass their `uig_…` token directly.
 
 ## Testing
 

@@ -12,25 +12,25 @@ import (
 func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_services",
 		mcp.WithDescription("List all services in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("folder_id", mcp.Description("Optional folder ID filter")),
 	), h.listServices)
 
 	s.AddTool(mcp.NewTool("get_service",
 		mcp.WithDescription("Get full details and stats for a service"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.getService)
 
 	s.AddTool(mcp.NewTool("list_api_groups",
 		mcp.WithDescription("List API specification groups for a service"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.listAPIGroups)
 
 	s.AddTool(mcp.NewTool("get_api_spec",
 		mcp.WithDescription("Get the full API specification content (OpenAPI/GraphQL/gRPC) for an API group"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
 		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking (e.g. claude-sonnet-4-6)")),
@@ -38,14 +38,14 @@ func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
 
 	s.AddTool(mcp.NewTool("list_endpoints",
 		mcp.WithDescription("List all API endpoints for a service or API group"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
 	), h.listEndpoints)
 }
 
 func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -76,7 +76,7 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 }
 
 func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -106,7 +106,7 @@ func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp
 }
 
 func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -135,7 +135,7 @@ func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*
 }
 
 func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -187,7 +187,7 @@ func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp
 }
 
 func (h *Handler) listEndpoints(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

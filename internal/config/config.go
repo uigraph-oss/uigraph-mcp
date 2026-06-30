@@ -3,12 +3,15 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type Config struct {
-	UIGraphAPIURL   string
-	Port            string
-	MCPServerName   string
+	UIGraphAPIURL    string
+	FrontendURL      string
+	MCPPublicURL     string
+	Port             string
+	MCPServerName    string
 	MCPServerVersion string
 }
 
@@ -16,6 +19,14 @@ func Load() (*Config, error) {
 	apiURL := os.Getenv("UIGRAPH_API_URL")
 	if apiURL == "" {
 		return nil, fmt.Errorf("UIGRAPH_API_URL is required")
+	}
+	frontendURL := os.Getenv("UIGRAPH_FRONTEND_URL")
+	if frontendURL == "" {
+		return nil, fmt.Errorf("UIGRAPH_FRONTEND_URL is required")
+	}
+	publicURL := os.Getenv("UIGRAPH_MCP_PUBLIC_URL")
+	if publicURL == "" {
+		return nil, fmt.Errorf("UIGRAPH_MCP_PUBLIC_URL is required")
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -31,6 +42,8 @@ func Load() (*Config, error) {
 	}
 	return &Config{
 		UIGraphAPIURL:    apiURL,
+		FrontendURL:      strings.TrimRight(frontendURL, "/"),
+		MCPPublicURL:     strings.TrimRight(publicURL, "/"),
 		Port:             port,
 		MCPServerName:    name,
 		MCPServerVersion: version,

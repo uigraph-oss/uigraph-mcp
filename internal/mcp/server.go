@@ -7,6 +7,7 @@ import (
 
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/uigraph/mcp/internal/apiclient"
+	"github.com/uigraph/mcp/internal/auth"
 	"github.com/uigraph/mcp/internal/config"
 	"github.com/uigraph/mcp/internal/tools"
 )
@@ -20,15 +21,21 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	sse := mcpserver.NewSSEServer(s,
 		mcpserver.WithBaseURL("http://0.0.0.0:"+cfg.Port),
 		mcpserver.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
-			token := extractToken(r)
-			return tools.WithToken(ctx, token)
+			ctx = tools.WithToken(ctx, extractToken(r))
+			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
+			return ctx
 		}),
 	)
+
+	authH := auth.New(cfg, client)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.HandleFunc("GET /auth/login", authH.Login)
+	mux.HandleFunc("GET /auth/callback", authH.Callback)
+	mux.HandleFunc("GET /auth/me", authH.Me)
 	mux.Handle("/", sse)
 	return mux
 }

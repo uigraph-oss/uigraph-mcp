@@ -12,19 +12,19 @@ import (
 func (h *Handler) RegisterMapTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_maps",
 		mcp.WithDescription("List UI journey maps in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 	), h.listMaps)
 
 	s.AddTool(mcp.NewTool("get_map",
 		mcp.WithDescription("Get a UI journey map with all its frames"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("map_id", mcp.Required(), mcp.Description("Map ID")),
 		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking")),
 	), h.getMap)
 }
 
 func (h *Handler) listMaps(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -50,7 +50,7 @@ func (h *Handler) listMaps(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 }
 
 func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

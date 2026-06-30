@@ -12,19 +12,19 @@ import (
 func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_diagrams",
 		mcp.WithDescription("List architecture diagrams in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 	), h.listDiagrams)
 
 	s.AddTool(mcp.NewTool("get_diagram",
 		mcp.WithDescription("Get the content of an architecture diagram"),
-		mcp.WithString("org_id", mcp.Required(), mcp.Description("Organisation ID")),
+		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
 		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking")),
 	), h.getDiagram)
 }
 
 func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -48,7 +48,7 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 }
 
 func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := req.RequireString("org_id")
+	orgID, err := h.orgID(ctx, req)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
