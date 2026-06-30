@@ -12,7 +12,6 @@ import (
 	"github.com/uigraph/mcp/internal/tools"
 )
 
-// New builds the MCP HTTP/SSE handler with all tools registered.
 func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	s := mcpserver.NewMCPServer(cfg.MCPServerName, cfg.MCPServerVersion)
 
@@ -40,7 +39,6 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	return mux
 }
 
-// extractToken pulls the bearer token from the Authorization header.
 func extractToken(r *http.Request) string {
 	v := r.Header.Get("Authorization")
 	if after, ok := strings.CutPrefix(v, "Bearer "); ok {

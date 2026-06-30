@@ -16,8 +16,6 @@ type contextKey string
 // Exported so internal/mcp can inject it from the SSE context func.
 const TokenKey contextKey = "bearer"
 
-// OrgKey is the context key under which the inbound default org id is stored.
-// Exported so internal/mcp can inject it from the SSE context func.
 const OrgKey contextKey = "org"
 
 // tokenFromCtx retrieves the bearer token injected into the request context.
@@ -31,21 +29,15 @@ func WithToken(ctx context.Context, token string) context.Context {
 	return context.WithValue(ctx, TokenKey, token)
 }
 
-// orgFromCtx retrieves the default org id injected into the request context.
 func orgFromCtx(ctx context.Context) string {
 	v, _ := ctx.Value(OrgKey).(string)
 	return v
 }
 
-// WithOrg returns a new context carrying the default org id.
 func WithOrg(ctx context.Context, org string) context.Context {
 	return context.WithValue(ctx, OrgKey, org)
 }
 
-// orgID resolves the org for a tool call: the explicit org_id argument when
-// provided, otherwise the default org injected from the request header. The
-// server is strict — it never resolves or guesses an org. The client is
-// responsible for sending an explicit org.
 func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, error) {
 	if v := req.GetString("org_id", ""); v != "" {
 		return v, nil

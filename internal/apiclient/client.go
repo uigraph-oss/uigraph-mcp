@@ -22,8 +22,6 @@ func New(baseURL string) *Client {
 	}
 }
 
-// setAuth attaches the token to the request. Service-account tokens are sent as
-// X-API-Key; user session tokens are sent as a Bearer token.
 func setAuth(req *http.Request, token string) {
 	if strings.HasPrefix(token, "uig_") {
 		req.Header.Set("X-API-Key", token)
