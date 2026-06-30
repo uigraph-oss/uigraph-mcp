@@ -18,9 +18,9 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 
 	registerTools(s, client)
 
-	sse := mcpserver.NewSSEServer(s,
-		mcpserver.WithBaseURL("http://0.0.0.0:"+cfg.Port),
-		mcpserver.WithSSEContextFunc(func(ctx context.Context, r *http.Request) context.Context {
+	streamable := mcpserver.NewStreamableHTTPServer(s,
+		mcpserver.WithStateLess(true),
+		mcpserver.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
 			ctx = tools.WithToken(ctx, extractToken(r))
 			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
 			return ctx
@@ -36,7 +36,7 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	mux.HandleFunc("GET /auth/login", authH.Login)
 	mux.HandleFunc("GET /auth/callback", authH.Callback)
 	mux.HandleFunc("GET /auth/me", authH.Me)
-	mux.Handle("/", sse)
+	mux.Handle("/", streamable)
 	return mux
 }
 
