@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -21,12 +22,22 @@ func New(baseURL string) *Client {
 	}
 }
 
+// setAuth attaches the token to the request. Service-account tokens are sent as
+// X-API-Key; user session tokens are sent as a Bearer token.
+func setAuth(req *http.Request, token string) {
+	if strings.HasPrefix(token, "uig_") {
+		req.Header.Set("X-API-Key", token)
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+}
+
 func (c *Client) get(ctx context.Context, token, path string, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+path, nil)
 	if err != nil {
 		return fmt.Errorf("apiclient: build request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	setAuth(req, token)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("apiclient: do request: %w", err)
@@ -50,7 +61,7 @@ func (c *Client) getRaw(ctx context.Context, token, path string) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: build request: %w", err)
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	setAuth(req, token)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: do request: %w", err)

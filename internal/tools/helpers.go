@@ -44,7 +44,8 @@ func WithOrg(ctx context.Context, org string) context.Context {
 
 // orgID resolves the org for a tool call: the explicit org_id argument when
 // provided, otherwise the default org injected from the request header. The
-// server is strict — it never guesses an org.
+// server is strict — it never resolves or guesses an org. The client is
+// responsible for sending an explicit org.
 func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, error) {
 	if v := req.GetString("org_id", ""); v != "" {
 		return v, nil
