@@ -36,10 +36,12 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 	}
 
 	var sb strings.Builder
-	sb.WriteString("# Architecture Diagrams\n\n")
+	sb.WriteString("# Architecture diagrams\n\n")
 	for _, d := range diagrams {
-		sb.WriteString(fmt.Sprintf("- **%s** — ID: `%s` | raw: ~%d tokens\n",
-			d.Name, d.ID, d.ContentTokenCount))
+		sb.WriteString(fmt.Sprintf("- **DiagramID:** `%s`\n", d.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", d.Name))
+		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", d.ContentTokenCount))
+		sb.WriteString("\n")
 	}
 	if len(diagrams) == 0 {
 		sb.WriteString("No diagrams found.\n")

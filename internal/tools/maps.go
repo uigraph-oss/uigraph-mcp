@@ -36,12 +36,15 @@ func (h *Handler) listMaps(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	}
 
 	var sb strings.Builder
-	sb.WriteString("# UI Journey Maps\n\n")
+	sb.WriteString("# UI journey maps\n\n")
 	for _, m := range maps {
-		sb.WriteString(fmt.Sprintf("- **%s** [%s] — ID: `%s`\n", m.Name, m.Status, m.ID))
+		sb.WriteString(fmt.Sprintf("- **MapID:** `%s`\n", m.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", m.Name))
+		sb.WriteString(fmt.Sprintf("  - **Status:** %s\n", m.Status))
 		if m.Description != "" {
-			sb.WriteString(fmt.Sprintf("  %s\n", m.Description))
+			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", m.Description))
 		}
+		sb.WriteString("\n")
 	}
 	if len(maps) == 0 {
 		sb.WriteString("No maps found.\n")
@@ -75,10 +78,11 @@ func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# Map: %s\n", m.Name))
-	sb.WriteString(fmt.Sprintf("**Status:** %s\n", m.Status))
+	sb.WriteString(fmt.Sprintf("- **MapID:** `%s`\n", m.ID))
+	sb.WriteString(fmt.Sprintf("- **Name:** %s\n", m.Name))
+	sb.WriteString(fmt.Sprintf("- **Status:** %s\n", m.Status))
 	if m.Description != "" {
-		sb.WriteString(fmt.Sprintf("\n%s\n", m.Description))
+		sb.WriteString(fmt.Sprintf("- **Description:** %s\n", m.Description))
 	}
 	sb.WriteString(fmt.Sprintf("\n## Frames (%d)\n\n", len(frames)))
 	for _, f := range frames {
@@ -86,10 +90,20 @@ func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 		if f.ParentFrameID != nil {
 			indent = "  "
 		}
-		sb.WriteString(fmt.Sprintf("%s- **%s** [%s/%s]\n", indent, f.Name, f.TemplateType, f.Status))
-		if f.Description != "" {
-			sb.WriteString(fmt.Sprintf("%s  %s\n", indent, f.Description))
+		sb.WriteString(fmt.Sprintf("%s- **FrameID:** `%s`\n", indent, f.ID))
+		sb.WriteString(fmt.Sprintf("%s  - **Name:** %s\n", indent, f.Name))
+		sb.WriteString(fmt.Sprintf("%s  - **Template:** %s\n", indent, f.TemplateType))
+		sb.WriteString(fmt.Sprintf("%s  - **Status:** %s\n", indent, f.Status))
+		if f.ParentFrameID != nil {
+			sb.WriteString(fmt.Sprintf("%s  - **ParentFrameID:** `%s`\n", indent, *f.ParentFrameID))
 		}
+		if f.Description != "" {
+			sb.WriteString(fmt.Sprintf("%s  - **Description:** %s\n", indent, f.Description))
+		}
+		sb.WriteString("\n")
+	}
+	if len(frames) == 0 {
+		sb.WriteString("No frames found.\n")
 	}
 
 	text := sb.String()

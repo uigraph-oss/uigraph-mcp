@@ -62,12 +62,17 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# Services in org %s\n\n", orgID))
+	sb.WriteString(fmt.Sprintf("# Services in org `%s`\n\n", orgID))
 	for _, s := range svcs {
-		sb.WriteString(fmt.Sprintf("- **%s** — %s | %s | %s\n", s.Name, s.Status, s.Tier, s.Language))
+		sb.WriteString(fmt.Sprintf("- **ServiceID:** `%s`\n", s.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", s.Name))
+		sb.WriteString(fmt.Sprintf("  - **Status:** %s\n", s.Status))
+		sb.WriteString(fmt.Sprintf("  - **Tier:** %s\n", s.Tier))
+		sb.WriteString(fmt.Sprintf("  - **Language:** %s\n", s.Language))
 		if s.Description != "" {
-			sb.WriteString(fmt.Sprintf("  %s\n", s.Description))
+			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", s.Description))
 		}
+		sb.WriteString("\n")
 	}
 	if len(svcs) == 0 {
 		sb.WriteString("No services found.\n")
@@ -92,15 +97,17 @@ func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# %s\n\n", svc.Name))
-	sb.WriteString(fmt.Sprintf("**ID:** %s\n", svc.ID))
-	sb.WriteString(fmt.Sprintf("**Status:** %s | **Tier:** %s | **Language:** %s | **Category:** %s\n",
-		svc.Status, svc.Tier, svc.Language, svc.Category))
-	if svc.Description != "" {
-		sb.WriteString(fmt.Sprintf("\n%s\n", svc.Description))
-	}
+	sb.WriteString(fmt.Sprintf("- **ServiceID:** `%s`\n", svc.ID))
+	sb.WriteString(fmt.Sprintf("- **Name:** %s\n", svc.Name))
+	sb.WriteString(fmt.Sprintf("- **Status:** %s\n", svc.Status))
+	sb.WriteString(fmt.Sprintf("- **Tier:** %s\n", svc.Tier))
+	sb.WriteString(fmt.Sprintf("- **Language:** %s\n", svc.Language))
+	sb.WriteString(fmt.Sprintf("- **Category:** %s\n", svc.Category))
 	if len(svc.Labels) > 0 {
-		sb.WriteString(fmt.Sprintf("\n**Labels:** %s\n", strings.Join(svc.Labels, ", ")))
+		sb.WriteString(fmt.Sprintf("- **Labels:** %s\n", strings.Join(svc.Labels, ", ")))
+	}
+	if svc.Description != "" {
+		sb.WriteString(fmt.Sprintf("- **Description:** %s\n", svc.Description))
 	}
 	return mcp.NewToolResultText(sb.String()), nil
 }
@@ -122,14 +129,19 @@ func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*
 	}
 
 	var sb strings.Builder
-	sb.WriteString("# API Groups\n\n")
+	sb.WriteString("# API groups\n\n")
 	for _, g := range groups {
-		label := ""
+		sb.WriteString(fmt.Sprintf("- **APIGroupID:** `%s`\n", g.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", g.Name))
+		sb.WriteString(fmt.Sprintf("  - **Version:** %s\n", g.Version))
+		sb.WriteString(fmt.Sprintf("  - **Protocol:** %s\n", g.Protocol))
 		if g.Label != nil {
-			label = " (" + *g.Label + ")"
+			sb.WriteString(fmt.Sprintf("  - **Label:** %s\n", *g.Label))
 		}
-		sb.WriteString(fmt.Sprintf("- **%s** %s%s — %s | ID: `%s`\n",
-			g.Name, g.Version, label, g.Protocol, g.ID))
+		sb.WriteString("\n")
+	}
+	if len(groups) == 0 {
+		sb.WriteString("No API groups found.\n")
 	}
 	return mcp.NewToolResultText(sb.String()), nil
 }
@@ -207,13 +219,22 @@ func (h *Handler) listEndpoints(ctx context.Context, req mcp.CallToolRequest) (*
 	}
 
 	var sb strings.Builder
-	sb.WriteString("# API Endpoints\n\n")
+	sb.WriteString("# API endpoints\n\n")
 	for _, e := range endpoints {
-		tags := ""
-		if len(e.Tags) > 0 {
-			tags = " [" + strings.Join(e.Tags, ", ") + "]"
+		sb.WriteString(fmt.Sprintf("- **EndpointID:** `%s`\n", e.ID))
+		sb.WriteString(fmt.Sprintf("  - **Method:** %s\n", e.Method))
+		sb.WriteString(fmt.Sprintf("  - **Path:** %s\n", e.Path))
+		if e.Summary != "" {
+			sb.WriteString(fmt.Sprintf("  - **Summary:** %s\n", e.Summary))
 		}
-		sb.WriteString(fmt.Sprintf("- **%s %s**%s — %s (~%d tokens)\n", e.Method, e.Path, tags, e.Summary, e.TokenCount))
+		if len(e.Tags) > 0 {
+			sb.WriteString(fmt.Sprintf("  - **Tags:** %s\n", strings.Join(e.Tags, ", ")))
+		}
+		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", e.TokenCount))
+		sb.WriteString("\n")
+	}
+	if len(endpoints) == 0 {
+		sb.WriteString("No endpoints found.\n")
 	}
 	return mcp.NewToolResultText(sb.String()), nil
 }

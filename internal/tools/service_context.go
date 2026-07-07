@@ -75,11 +75,14 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("# Service: %s\n\n", svc.Name))
-	sb.WriteString(fmt.Sprintf("**ID:** %s\n", svc.ID))
-	sb.WriteString(fmt.Sprintf("**Status:** %s | **Tier:** %s | **Language:** %s | **Category:** %s\n",
-		svc.Status, svc.Tier, svc.Language, svc.Category))
+	sb.WriteString(fmt.Sprintf("- **ServiceID:** `%s`\n", svc.ID))
+	sb.WriteString(fmt.Sprintf("- **Name:** %s\n", svc.Name))
+	sb.WriteString(fmt.Sprintf("- **Status:** %s\n", svc.Status))
+	sb.WriteString(fmt.Sprintf("- **Tier:** %s\n", svc.Tier))
+	sb.WriteString(fmt.Sprintf("- **Language:** %s\n", svc.Language))
+	sb.WriteString(fmt.Sprintf("- **Category:** %s\n", svc.Category))
 	if svc.Description != "" {
-		sb.WriteString(fmt.Sprintf("\n%s\n", svc.Description))
+		sb.WriteString(fmt.Sprintf("- **Description:** %s\n", svc.Description))
 	}
 
 	// sum per-endpoint token counts across all groups
@@ -92,12 +95,14 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	sb.WriteString(fmt.Sprintf("\n## API Specifications (%d groups, %d endpoints)\n\n", len(apiGroups), len(allEndpoints)))
 	resourceIDs := []string{svc.ID}
 	for _, g := range apiGroups {
-		label := ""
+		sb.WriteString(fmt.Sprintf("- **APIGroupID:** `%s`\n", g.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", g.Name))
+		sb.WriteString(fmt.Sprintf("  - **Version:** %s\n", g.Version))
+		sb.WriteString(fmt.Sprintf("  - **Protocol:** %s\n", g.Protocol))
 		if g.Label != nil {
-			label = " (" + *g.Label + ")"
+			sb.WriteString(fmt.Sprintf("  - **Label:** %s\n", *g.Label))
 		}
-		sb.WriteString(fmt.Sprintf("- **%s** %s%s — %s | ID: `%s`\n",
-			g.Name, g.Version, label, g.Protocol, g.ID))
+		sb.WriteString("\n")
 		resourceIDs = append(resourceIDs, g.ID)
 	}
 	if endpointTokenTotal > 0 {
@@ -108,8 +113,12 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	// DB schemas
 	sb.WriteString(fmt.Sprintf("\n## Database Schemas (%d)\n\n", len(dbs)))
 	for _, db := range dbs {
-		sb.WriteString(fmt.Sprintf("- **%s** (%s/%s) — raw: ~%d tokens | ID: `%s`\n",
-			db.DBName, db.DBType, db.Dialect, db.SchemaTokenCount, db.ID))
+		sb.WriteString(fmt.Sprintf("- **DatabaseID:** `%s`\n", db.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", db.DBName))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s\n", db.DBType))
+		sb.WriteString(fmt.Sprintf("  - **Dialect:** %s\n", db.Dialect))
+		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", db.SchemaTokenCount))
+		sb.WriteString("\n")
 		totalRawTokens += db.SchemaTokenCount
 		resourceIDs = append(resourceIDs, db.ID)
 	}
@@ -117,15 +126,21 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	// Diagrams
 	sb.WriteString(fmt.Sprintf("\n## Architecture Diagrams (%d)\n\n", len(diagrams)))
 	for _, d := range diagrams {
-		sb.WriteString(fmt.Sprintf("- Diagram ID: `%s`\n", d.DiagramID))
+		sb.WriteString(fmt.Sprintf("- **DiagramID:** `%s`\n", d.DiagramID))
 		resourceIDs = append(resourceIDs, d.DiagramID)
 	}
 
 	// Docs
 	sb.WriteString(fmt.Sprintf("\n## Documentation (%d)\n\n", len(docs)))
 	for _, doc := range docs {
-		sb.WriteString(fmt.Sprintf("- **%s** [%s] — %s | raw: ~%d tokens\n",
-			doc.FileName, doc.FileType, doc.Description, doc.DocTokenCount))
+		sb.WriteString(fmt.Sprintf("- **DocID:** `%s`\n", doc.ID))
+		sb.WriteString(fmt.Sprintf("  - **FileName:** %s\n", doc.FileName))
+		sb.WriteString(fmt.Sprintf("  - **FileType:** %s\n", doc.FileType))
+		if doc.Description != "" {
+			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", doc.Description))
+		}
+		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", doc.DocTokenCount))
+		sb.WriteString("\n")
 		totalRawTokens += doc.DocTokenCount
 	}
 

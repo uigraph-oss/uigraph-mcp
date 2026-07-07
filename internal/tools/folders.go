@@ -38,11 +38,16 @@ func (h *Handler) listFolders(ctx context.Context, req mcp.CallToolRequest) (*mc
 	var sb strings.Builder
 	sb.WriteString("# Folders\n\n")
 	for _, f := range folders {
-		parent := ""
+		sb.WriteString(fmt.Sprintf("- **FolderID:** `%s`\n", f.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", f.Name))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s\n", f.Type))
 		if f.ParentID != nil {
-			parent = fmt.Sprintf(" (parent: %s)", *f.ParentID)
+			sb.WriteString(fmt.Sprintf("  - **ParentID:** `%s`\n", *f.ParentID))
 		}
-		sb.WriteString(fmt.Sprintf("- **%s** [%s]%s — ID: `%s`\n", f.Name, f.Type, parent, f.ID))
+		sb.WriteString("\n")
+	}
+	if len(folders) == 0 {
+		sb.WriteString("No folders found.\n")
 	}
 	return mcp.NewToolResultText(sb.String()), nil
 }

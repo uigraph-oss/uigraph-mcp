@@ -42,10 +42,14 @@ func (h *Handler) listServiceDBs(ctx context.Context, req mcp.CallToolRequest) (
 	}
 
 	var sb strings.Builder
-	sb.WriteString("# Database Schemas\n\n")
+	sb.WriteString("# Database schemas\n\n")
 	for _, db := range dbs {
-		sb.WriteString(fmt.Sprintf("- **%s** (%s/%s) — ID: `%s` | raw: ~%d tokens\n",
-			db.DBName, db.DBType, db.Dialect, db.ID, db.SchemaTokenCount))
+		sb.WriteString(fmt.Sprintf("- **DatabaseID:** `%s`\n", db.ID))
+		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", db.DBName))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s\n", db.DBType))
+		sb.WriteString(fmt.Sprintf("  - **Dialect:** %s\n", db.Dialect))
+		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", db.SchemaTokenCount))
+		sb.WriteString("\n")
 	}
 	if len(dbs) == 0 {
 		sb.WriteString("No databases found.\n")
@@ -77,10 +81,13 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 
-	text := fmt.Sprintf("# Database: %s\nType: %s | Dialect: %s\n\n", db.DBName, db.DBType, db.Dialect)
+	text := fmt.Sprintf("- **DatabaseID:** `%s`\n", db.ID)
+	text += fmt.Sprintf("- **Name:** %s\n", db.DBName)
+	text += fmt.Sprintf("- **Type:** %s\n", db.DBType)
+	text += fmt.Sprintf("- **Dialect:** %s\n", db.Dialect)
 	// schema JSON is returned as part of the ServiceDB struct — the apiclient
 	// would need to include SchemaJSON. For now format available metadata.
-	text += fmt.Sprintf("Raw schema file: ~%d tokens\nID: %s\n", db.SchemaTokenCount, db.ID)
+	text += fmt.Sprintf("- **Tokens:** ~%d\n", db.SchemaTokenCount)
 
 	const maxChars = 50_000
 	truncated := false
