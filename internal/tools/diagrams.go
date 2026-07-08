@@ -19,7 +19,6 @@ func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 		mcp.WithDescription("Get the content of an architecture diagram"),
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
-		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking")),
 	), h.getDiagram)
 }
 
@@ -58,10 +57,6 @@ func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	modelID := req.GetString("model_id", "")
-	if modelID == "" {
-		modelID = "claude-sonnet-4-6"
-	}
 	token := tokenFromCtx(ctx)
 
 	content, err := h.client.GetDiagramContent(ctx, token, orgID, diagramID)
@@ -87,7 +82,7 @@ func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp
 		}
 	}
 
-	go h.recordUsage(orgID, token, "get_diagram", []string{diagramID}, modelID, text, exactTokens)
+	go h.recordUsage(ctx, orgID, token, "get_diagram", []string{diagramID}, text, exactTokens)
 
 	if truncated {
 		text += "\n\n[Truncated at 100,000 characters]"

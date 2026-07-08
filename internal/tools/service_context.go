@@ -16,7 +16,6 @@ func (h *Handler) RegisterServiceContextTool(s *mcpserver.MCPServer) {
 		mcp.WithDescription("Get comprehensive context for a service: metadata, API specs, DB schemas, diagrams, and docs. Use this as the primary tool when you need to understand a service."),
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
-		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking (e.g. claude-sonnet-4-6)")),
 	), h.getServiceContext)
 }
 
@@ -28,10 +27,6 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	serviceID, err := req.RequireString("service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
-	}
-	modelID := req.GetString("model_id", "")
-	if modelID == "" {
-		modelID = "claude-sonnet-4-6"
 	}
 	token := tokenFromCtx(ctx)
 
@@ -147,7 +142,7 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	text := sb.String()
 
 	// Use sum of actual file token counts as raw equivalent (exact)
-	go h.recordUsage(orgID, token, "get_service_context", resourceIDs, modelID, text, &totalRawTokens)
+	go h.recordUsage(ctx, orgID, token, "get_service_context", resourceIDs, text, &totalRawTokens)
 
 	return mcp.NewToolResultText(text), nil
 }

@@ -33,7 +33,6 @@ func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
-		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking (e.g. claude-sonnet-4-6)")),
 	), h.getAPISpec)
 
 	s.AddTool(mcp.NewTool("list_endpoints",
@@ -159,10 +158,6 @@ func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	modelID := req.GetString("model_id", "")
-	if modelID == "" {
-		modelID = "claude-sonnet-4-6"
-	}
 	token := tokenFromCtx(ctx)
 
 	specBytes, err := h.client.GetAPIGroupSpec(ctx, token, orgID, serviceID, apiGroupID)
@@ -189,7 +184,7 @@ func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp
 		exactTokens = &total
 	}
 
-	go h.recordUsage(orgID, token, "get_api_spec", []string{apiGroupID}, modelID, spec, exactTokens)
+	go h.recordUsage(ctx, orgID, token, "get_api_spec", []string{apiGroupID}, spec, exactTokens)
 
 	result := spec
 	if truncated {

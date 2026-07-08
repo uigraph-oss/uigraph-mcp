@@ -21,7 +21,6 @@ func (h *Handler) RegisterSchemaTools(s *mcpserver.MCPServer) {
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("db_id", mcp.Required(), mcp.Description("Service DB ID")),
-		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking")),
 	), h.getDBSchema)
 }
 
@@ -70,10 +69,6 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	modelID := req.GetString("model_id", "")
-	if modelID == "" {
-		modelID = "claude-sonnet-4-6"
-	}
 	token := tokenFromCtx(ctx)
 
 	db, err := h.client.GetServiceDB(ctx, token, orgID, serviceID, dbID)
@@ -97,7 +92,7 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 	}
 
 	exactTokens := &db.SchemaTokenCount
-	go h.recordUsage(orgID, token, "get_db_schema", []string{dbID}, modelID, text, exactTokens)
+	go h.recordUsage(ctx, orgID, token, "get_db_schema", []string{dbID}, text, exactTokens)
 
 	if truncated {
 		text += "\n\n[Truncated at 50,000 characters]"
