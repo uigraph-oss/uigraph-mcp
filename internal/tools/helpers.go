@@ -54,6 +54,10 @@ func clientFromCtx(ctx context.Context) (string, string) {
 	return name, version
 }
 
+func ClientFromCtx(ctx context.Context) (string, string) {
+	return clientFromCtx(ctx)
+}
+
 func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, error) {
 	if v := req.GetString("org_id", ""); v != "" {
 		return v, nil
@@ -82,7 +86,12 @@ func (h *Handler) recordUsage(reqCtx context.Context, orgID, token, toolName str
 		ClientName:          clientName,
 		ClientVersion:       clientVersion,
 	}
+	slog.Info("recording MCP usage",
+		"tool", toolName, "org", orgID, "client", clientName,
+		"tokensServed", served, "tokensSaved", raw-served)
 	if err := h.client.RecordUsage(ctx, token, orgID, payload); err != nil {
-		slog.Warn("failed to record MCP usage", "tool", toolName, "err", err)
+		slog.Error("failed to record MCP usage", "tool", toolName, "org", orgID, "err", err)
+		return
 	}
+	slog.Info("recorded MCP usage", "tool", toolName, "org", orgID)
 }

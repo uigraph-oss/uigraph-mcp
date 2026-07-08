@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -35,6 +36,10 @@ func (c *Client) RecordUsage(ctx context.Context, token, orgID string, e UsageEv
 	if err != nil {
 		return fmt.Errorf("apiclient: record usage: %w", err)
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("apiclient: record usage → %d: %s", resp.StatusCode, body)
+	}
 	return nil
 }

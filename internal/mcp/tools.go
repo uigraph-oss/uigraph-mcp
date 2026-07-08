@@ -8,6 +8,7 @@ import (
 
 func registerTools(s *mcpserver.MCPServer, client *apiclient.Client) {
 	h := tools.New(client)
+	h.RegisterUserTool(s)
 	h.RegisterServiceContextTool(s)
 	h.RegisterCatalogTools(s)
 	h.RegisterFolderTools(s)
