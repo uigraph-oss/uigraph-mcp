@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -48,6 +49,7 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 			ctx = tools.WithToken(ctx, extractToken(r))
 			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
 			ctx = tools.WithClient(ctx, r.Header.Get("X-UIGraph-Client-Name"), r.Header.Get("X-UIGraph-Client-Version"))
+			ctx = tools.WithStart(ctx, time.Now())
 			return ctx
 		}),
 	)

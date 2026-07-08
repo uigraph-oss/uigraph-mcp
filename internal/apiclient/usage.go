@@ -18,6 +18,7 @@ type UsageEventPayload struct {
 	ResponseSizeBytes   int      `json:"responseSizeBytes"`
 	ClientName          string   `json:"clientName,omitempty"`
 	ClientVersion       string   `json:"clientVersion,omitempty"`
+	DurationMs          int      `json:"durationMs"`
 }
 
 func (c *Client) RecordUsage(ctx context.Context, token, orgID string, e UsageEventPayload) error {

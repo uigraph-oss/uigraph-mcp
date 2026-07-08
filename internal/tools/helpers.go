@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/uigraph/mcp/internal/apiclient"
@@ -21,6 +22,8 @@ const OrgKey contextKey = "org"
 const ClientNameKey contextKey = "clientName"
 
 const ClientVersionKey contextKey = "clientVersion"
+
+const StartKey contextKey = "start"
 
 // tokenFromCtx retrieves the bearer token injected into the request context.
 func tokenFromCtx(ctx context.Context) string {
@@ -54,6 +57,23 @@ func clientFromCtx(ctx context.Context) (string, string) {
 	return name, version
 }
 
+func WithStart(ctx context.Context, start time.Time) context.Context {
+	return context.WithValue(ctx, StartKey, start)
+}
+
+func startFromCtx(ctx context.Context) (time.Time, bool) {
+	start, ok := ctx.Value(StartKey).(time.Time)
+	return start, ok
+}
+
+func durationMsFromCtx(ctx context.Context) int {
+	start, ok := startFromCtx(ctx)
+	if !ok {
+		return 0
+	}
+	return int(time.Since(start).Milliseconds())
+}
+
 func ClientFromCtx(ctx context.Context) (string, string) {
 	return clientFromCtx(ctx)
 }
@@ -85,6 +105,7 @@ func (h *Handler) recordUsage(reqCtx context.Context, orgID, token, toolName str
 		ResponseSizeBytes:   len(responseText),
 		ClientName:          clientName,
 		ClientVersion:       clientVersion,
+		DurationMs:          durationMsFromCtx(reqCtx),
 	}
 	slog.Info("recording MCP usage",
 		"tool", toolName, "org", orgID, "client", clientName,
@@ -126,6 +147,7 @@ func RecordToolCall(reqCtx context.Context, client *apiclient.Client, toolName, 
 		ResponseSizeBytes:   len(responseText),
 		ClientName:          clientName,
 		ClientVersion:       clientVersion,
+		DurationMs:          durationMsFromCtx(reqCtx),
 	}
 	slog.Info("recording MCP usage",
 		"tool", toolName, "org", orgID, "client", clientName,
