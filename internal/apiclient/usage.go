@@ -11,11 +11,12 @@ import (
 type UsageEventPayload struct {
 	ToolName            string   `json:"toolName"`
 	ResourceIDs         []string `json:"resourceIds"`
-	ModelID             string   `json:"modelId"`
 	TokensServed        int      `json:"tokensServed"`
 	TokensRawEquivalent int      `json:"tokensRawEquivalent"`
 	TokensSaved         int      `json:"tokensSaved"`
 	ResponseSizeBytes   int      `json:"responseSizeBytes"`
+	ClientName          string   `json:"clientName,omitempty"`
+	ClientVersion       string   `json:"clientVersion,omitempty"`
 }
 
 func (c *Client) RecordUsage(ctx context.Context, token, orgID string, e UsageEventPayload) error {

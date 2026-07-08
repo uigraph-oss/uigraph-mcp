@@ -18,6 +18,10 @@ const TokenKey contextKey = "bearer"
 
 const OrgKey contextKey = "org"
 
+const ClientNameKey contextKey = "clientName"
+
+const ClientVersionKey contextKey = "clientVersion"
+
 // tokenFromCtx retrieves the bearer token injected into the request context.
 func tokenFromCtx(ctx context.Context) string {
 	v, _ := ctx.Value(TokenKey).(string)
@@ -38,6 +42,18 @@ func WithOrg(ctx context.Context, org string) context.Context {
 	return context.WithValue(ctx, OrgKey, org)
 }
 
+func WithClient(ctx context.Context, name, version string) context.Context {
+	ctx = context.WithValue(ctx, ClientNameKey, name)
+	ctx = context.WithValue(ctx, ClientVersionKey, version)
+	return ctx
+}
+
+func clientFromCtx(ctx context.Context) (string, string) {
+	name, _ := ctx.Value(ClientNameKey).(string)
+	version, _ := ctx.Value(ClientVersionKey).(string)
+	return name, version
+}
+
 func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, error) {
 	if v := req.GetString("org_id", ""); v != "" {
 		return v, nil
@@ -48,19 +64,23 @@ func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, e
 	return "", fmt.Errorf("org_id is required")
 }
 
-// recordUsage fires-and-forgets a usage event to uigraph-api.
-func (h *Handler) recordUsage(orgID, token, toolName string, resourceIDs []string, modelID, responseText string, exactFileTokens *int) {
-	ctx := context.Background()
+// recordUsage fires-and-forgets a usage event to uigraph-api. It reads the
+// agentic tool's identity from reqCtx, then detaches from it for the outbound
+// call so the request's cancellation does not abort the report.
+func (h *Handler) recordUsage(reqCtx context.Context, orgID, token, toolName string, resourceIDs []string, responseText string, exactFileTokens *int) {
+	clientName, clientVersion := clientFromCtx(reqCtx)
+	ctx := context.WithoutCancel(reqCtx)
 	served := tokencount.Count(responseText)
 	raw := tokencount.RawEquivalent(toolName, served, exactFileTokens)
 	payload := apiclient.UsageEventPayload{
 		ToolName:            toolName,
 		ResourceIDs:         resourceIDs,
-		ModelID:             modelID,
 		TokensServed:        served,
 		TokensRawEquivalent: raw,
 		TokensSaved:         raw - served,
 		ResponseSizeBytes:   len(responseText),
+		ClientName:          clientName,
+		ClientVersion:       clientVersion,
 	}
 	if err := h.client.RecordUsage(ctx, token, orgID, payload); err != nil {
 		slog.Warn("failed to record MCP usage", "tool", toolName, "err", err)

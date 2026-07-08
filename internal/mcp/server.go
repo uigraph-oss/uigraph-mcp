@@ -22,6 +22,7 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 		mcpserver.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
 			ctx = tools.WithToken(ctx, extractToken(r))
 			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
+			ctx = tools.WithClient(ctx, r.Header.Get("X-UIGraph-Client-Name"), r.Header.Get("X-UIGraph-Client-Version"))
 			return ctx
 		}),
 	)

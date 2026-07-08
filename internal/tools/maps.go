@@ -19,7 +19,6 @@ func (h *Handler) RegisterMapTools(s *mcpserver.MCPServer) {
 		mcp.WithDescription("Get a UI journey map with all its frames"),
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("map_id", mcp.Required(), mcp.Description("Map ID")),
-		mcp.WithString("model_id", mcp.Description("LLM model ID for cost tracking")),
 	), h.getMap)
 }
 
@@ -60,10 +59,6 @@ func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 	mapID, err := req.RequireString("map_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
-	}
-	modelID := req.GetString("model_id", "")
-	if modelID == "" {
-		modelID = "claude-sonnet-4-6"
 	}
 	token := tokenFromCtx(ctx)
 
@@ -107,6 +102,6 @@ func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 	}
 
 	text := sb.String()
-	go h.recordUsage(orgID, token, "get_map", []string{mapID}, modelID, text, nil)
+	go h.recordUsage(ctx, orgID, token, "get_map", []string{mapID}, text, nil)
 	return mcp.NewToolResultText(text), nil
 }
