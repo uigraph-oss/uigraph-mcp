@@ -20,6 +20,20 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 		name, version := tools.ClientFromCtx(ctx)
 		slog.Info("tool call", "tool", req.Params.Name, "client", name, "clientVersion", version)
 	})
+	hooks.AddAfterCallTool(func(ctx context.Context, id any, req *mcp.CallToolRequest, result any) {
+		res, ok := result.(*mcp.CallToolResult)
+		if !ok {
+			return
+		}
+		if res.IsError {
+			name, version := tools.ClientFromCtx(ctx)
+			slog.Error("tool call failed",
+				"tool", req.Params.Name, "client", name, "clientVersion", version,
+				"error", toolResultText(res))
+			return
+		}
+		go tools.RecordToolCall(ctx, client, req.Params.Name, toolResultText(res))
+	})
 	hooks.AddOnError(func(ctx context.Context, id any, method mcp.MCPMethod, message any, err error) {
 		slog.Error("mcp error", "method", method, "err", err)
 	})
@@ -49,6 +63,16 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	mux.HandleFunc("GET /auth/me", authH.Me)
 	mux.Handle("/", streamable)
 	return mux
+}
+
+func toolResultText(res *mcp.CallToolResult) string {
+	var sb strings.Builder
+	for _, c := range res.Content {
+		if tc, ok := c.(mcp.TextContent); ok {
+			sb.WriteString(tc.Text)
+		}
+	}
+	return sb.String()
 }
 
 func extractToken(r *http.Request) string {

@@ -95,3 +95,44 @@ func (h *Handler) recordUsage(reqCtx context.Context, orgID, token, toolName str
 	}
 	slog.Info("recorded MCP usage", "tool", toolName, "org", orgID)
 }
+
+var selfRecordingTools = map[string]bool{
+	"get_service_context": true,
+	"get_api_spec":        true,
+	"get_db_schema":       true,
+	"get_diagram":         true,
+	"get_map":             true,
+}
+
+func RecordToolCall(reqCtx context.Context, client *apiclient.Client, toolName, responseText string) {
+	if selfRecordingTools[toolName] {
+		return
+	}
+	orgID := orgFromCtx(reqCtx)
+	if orgID == "" {
+		slog.Error("skip recording MCP usage: missing org", "tool", toolName)
+		return
+	}
+	token := tokenFromCtx(reqCtx)
+	clientName, clientVersion := clientFromCtx(reqCtx)
+	ctx := context.WithoutCancel(reqCtx)
+	served := tokencount.Count(responseText)
+	raw := tokencount.RawEquivalent(toolName, served, nil)
+	payload := apiclient.UsageEventPayload{
+		ToolName:            toolName,
+		TokensServed:        served,
+		TokensRawEquivalent: raw,
+		TokensSaved:         raw - served,
+		ResponseSizeBytes:   len(responseText),
+		ClientName:          clientName,
+		ClientVersion:       clientVersion,
+	}
+	slog.Info("recording MCP usage",
+		"tool", toolName, "org", orgID, "client", clientName,
+		"tokensServed", served, "tokensSaved", raw-served)
+	if err := client.RecordUsage(ctx, token, orgID, payload); err != nil {
+		slog.Error("failed to record MCP usage", "tool", toolName, "org", orgID, "err", err)
+		return
+	}
+	slog.Info("recorded MCP usage", "tool", toolName, "org", orgID)
+}
