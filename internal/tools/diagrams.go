@@ -19,6 +19,7 @@ func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 		mcp.WithDescription("Get the content of an architecture diagram"),
 		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
+		mcp.WithBoolean("include_thumbnail", mcp.Description("Include a thumbnailURL for the diagram's preview image, if one exists")),
 	), h.getDiagram)
 }
 
@@ -87,5 +88,27 @@ func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if truncated {
 		text += "\n\n[Truncated at 100,000 characters]"
 	}
+
+	if req.GetBool("include_thumbnail", false) {
+		if url := h.thumbnailURL(ctx, token, orgID, diagramID); url != "" {
+			text = fmt.Sprintf("**thumbnailURL:** %s\n\n%s", url, text)
+		}
+	}
+
 	return mcp.NewToolResultText(text), nil
+}
+
+func (h *Handler) thumbnailURL(ctx context.Context, token, orgID, diagramID string) string {
+	dg, err := h.client.GetDiagram(ctx, token, orgID, diagramID)
+	if err != nil || dg == nil || dg.PreviewStatus != "success" || dg.PreviewAssetID == nil {
+		return ""
+	}
+	url, err := h.client.ResolveAssetURL(ctx, token, orgID, *dg.PreviewAssetID)
+	if err != nil || url == "" {
+		return ""
+	}
+	if !h.client.URLExists(ctx, url) {
+		return ""
+	}
+	return url
 }

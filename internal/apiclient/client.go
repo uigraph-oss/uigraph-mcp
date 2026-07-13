@@ -75,4 +75,17 @@ func (c *Client) getRaw(ctx context.Context, token, path string) ([]byte, error)
 	return io.ReadAll(resp.Body)
 }
 
+func (c *Client) URLExists(ctx context.Context, url string) bool {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == http.StatusOK
+}
+
 var ErrNotFound = fmt.Errorf("not found")
