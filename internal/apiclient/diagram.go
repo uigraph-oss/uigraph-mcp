@@ -36,6 +36,19 @@ func (c *Client) GetDiagram(ctx context.Context, token, orgID, diagramID string)
 	return &d, nil
 }
 
+func (c *Client) ConvertDiagramToMermaid(ctx context.Context, token, content string) (string, error) {
+	req := struct {
+		Content string `json:"content"`
+	}{Content: content}
+	var resp struct {
+		Mermaid string `json:"mermaid"`
+	}
+	if err := c.postGateway(ctx, token, "/v1/sync/diagrams/to-mermaid", req, &resp); err != nil {
+		return "", err
+	}
+	return resp.Mermaid, nil
+}
+
 func (c *Client) ResolveAssetURL(ctx context.Context, token, orgID, assetID string) (string, error) {
 	var resp struct {
 		URLs map[string]string `json:"urls"`
