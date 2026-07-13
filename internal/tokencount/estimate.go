@@ -10,22 +10,20 @@ func Count(text string) int {
 // When an AI tool reads the equivalent raw repo file, it burns
 // (served tokens × multiplier) input tokens.
 var multipliers = map[string]float64{
-	"get_service_context": 6.0,
-	"get_api_spec":        4.0,
-	"list_endpoints":      3.0,
-	"get_db_schema":       3.5,
-	"get_diagram":         2.0,
-	"get_map":             2.0,
-	"list_services":       1.5,
-	"get_service":         1.5,
-	"list_api_groups":     1.5,
-	"list_service_dbs":    1.5,
-	"list_diagrams":       1.5,
-	"list_maps":           1.5,
-	"list_folders":        1.5,
+	"get_service_context": 3.0,
+	"get_api_spec":        2.5,
+	"list_endpoints":      2.0,
+	"get_db_schema":       2.25,
+	"get_diagram":         1.5,
+	"get_map":             1.5,
+	"list_services":       1.2,
+	"get_service":         1.2,
+	"list_api_groups":     1.2,
+	"list_service_dbs":    1.2,
+	"list_diagrams":       1.2,
+	"list_maps":           1.2,
+	"list_folders":        1.2,
 }
-
-const defaultMultiplier = 1.5
 
 // RawEquivalent returns the estimated tokens an AI would have burned reading
 // the equivalent raw repo files. If exactFileTokens is non-nil (recorded at
@@ -37,7 +35,7 @@ func RawEquivalent(toolName string, served int, exactFileTokens *int) int {
 	}
 	m, ok := multipliers[toolName]
 	if !ok {
-		m = defaultMultiplier
+		m = 1
 	}
 	return int(float64(served) * m)
 }
