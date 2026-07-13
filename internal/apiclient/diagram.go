@@ -25,7 +25,13 @@ func (c *Client) ListDiagrams(ctx context.Context, token, orgID string, folderID
 }
 
 func (c *Client) GetDiagramContent(ctx context.Context, token, orgID, diagramID string) ([]byte, error) {
-	return c.getRaw(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/diagrams/%s/content", orgID, diagramID))
+	var resp struct {
+		Content string `json:"content"`
+	}
+	if err := c.get(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/diagrams/%s/content", orgID, diagramID), &resp); err != nil {
+		return nil, err
+	}
+	return []byte(resp.Content), nil
 }
 
 func (c *Client) GetDiagram(ctx context.Context, token, orgID, diagramID string) (*Diagram, error) {
