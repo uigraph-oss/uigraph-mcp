@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := apiclient.New(cfg.UIGraphAPIURL)
+	client := apiclient.New(cfg.UIGraphAPIURL, cfg.UIGraphGatewayURL)
 	handler := mcphandler.New(cfg, client)
 
 	slog.Info("uigraph-mcp starting", "port", cfg.Port)

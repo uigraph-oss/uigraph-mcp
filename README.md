@@ -33,6 +33,7 @@ Requires a running [uigraph-api](https://github.com/uigraph-oss/uigraph-api) ins
 | Variable | Default | Description |
 |---|---|---|
 | `UIGRAPH_API_URL` | — | Base URL of uigraph-api (required) |
+| `UIGRAPH_GATEWAY_URL` | — | Base URL of uigraph-gateway, used to convert diagrams to mermaid (required) |
 | `UIGRAPH_FRONTEND_URL` | — | Base URL of the UIGraph frontend, used for the login broker (required) |
 | `UIGRAPH_MCP_PUBLIC_URL` | — | Public base URL of this MCP server, used to build the auth callback (required) |
 | `PORT` | `8080` | HTTP listen port |
