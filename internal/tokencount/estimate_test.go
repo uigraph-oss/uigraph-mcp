@@ -22,17 +22,17 @@ func TestRawEquivalent_ExactCount(t *testing.T) {
 }
 
 func TestRawEquivalent_Multiplier(t *testing.T) {
-	// get_api_spec fallback multiplier is 4.0x
+	// get_api_spec fallback multiplier is 2.5x
 	got := tokencount.RawEquivalent("get_api_spec", 1000, nil)
-	if got != 4000 {
-		t.Fatalf("RawEquivalent fallback = %d, want 4000", got)
+	if got != 2500 {
+		t.Fatalf("RawEquivalent fallback = %d, want 2500", got)
 	}
 }
 
 func TestRawEquivalent_UnknownTool(t *testing.T) {
-	// unknown tool uses 1.5x
+	// unknown tool uses 1x
 	got := tokencount.RawEquivalent("unknown_tool", 1000, nil)
-	if got != 1500 {
-		t.Fatalf("RawEquivalent unknown = %d, want 1500", got)
+	if got != 1000 {
+		t.Fatalf("RawEquivalent unknown = %d, want 1000", got)
 	}
 }
