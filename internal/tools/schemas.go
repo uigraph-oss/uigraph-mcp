@@ -2,6 +2,7 @@ package tools
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -78,9 +79,7 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 	text += fmt.Sprintf("- **Name:** %s\n", db.DBName)
 	text += fmt.Sprintf("- **Type:** %s\n", db.DBType)
 	text += fmt.Sprintf("- **Dialect:** %s\n", db.Dialect)
-	// schema JSON is returned as part of the ServiceDB struct — the apiclient
-	// would need to include SchemaJSON. For now format available metadata.
-	text += fmt.Sprintf("- **Tokens:** ~%d\n", db.SchemaTokenCount)
+	text += formatDBSchema(db.SchemaJSON)
 
 	const maxChars = 50_000
 	truncated := false
@@ -96,4 +95,109 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 		text += "\n\n[Truncated at 50,000 characters]"
 	}
 	return mcp.NewToolResultText(text), nil
+}
+
+func formatDBSchema(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	data := []byte(raw)
+	var asString string
+	if err := json.Unmarshal(data, &asString); err == nil {
+		data = []byte(asString)
+	}
+	var schema struct {
+		Tables []struct {
+			Name    string `json:"name"`
+			Columns []struct {
+				Name          string  `json:"name"`
+				Type          string  `json:"type"`
+				Nullable      *bool   `json:"nullable"`
+				IsPrimaryKey  *bool   `json:"isPrimaryKey"`
+				Unique        *bool   `json:"unique"`
+				AutoIncrement *bool   `json:"autoIncrement"`
+				DefaultValue  *string `json:"defaultValue"`
+				ForeignKey    *string `json:"foreignKey"`
+				Description   *string `json:"description"`
+			} `json:"columns"`
+			Indexes []struct {
+				Name   string   `json:"name"`
+				Type   string   `json:"type"`
+				Fields []string `json:"fields"`
+			} `json:"indexes"`
+		} `json:"tables"`
+		NoSQLSchema json.RawMessage `json:"noSQLSchema"`
+	}
+	if err := json.Unmarshal(data, &schema); err != nil {
+		return ""
+	}
+
+	var sb strings.Builder
+
+	for _, t := range schema.Tables {
+		sb.WriteString(fmt.Sprintf("\n## `%s`\n\n", t.Name))
+		sb.WriteString("| Column | Type | Nullable | Key | Default | Description |\n")
+		sb.WriteString("| --- | --- | --- | --- | --- | --- |\n")
+		for _, c := range t.Columns {
+			var keys []string
+			if c.IsPrimaryKey != nil && *c.IsPrimaryKey {
+				keys = append(keys, "PK")
+			}
+			if c.Unique != nil && *c.Unique {
+				keys = append(keys, "unique")
+			}
+			if c.AutoIncrement != nil && *c.AutoIncrement {
+				keys = append(keys, "auto")
+			}
+			if c.ForeignKey != nil && *c.ForeignKey != "" {
+				keys = append(keys, "FK→"+*c.ForeignKey)
+			}
+			nullable := ""
+			if c.Nullable != nil && *c.Nullable {
+				nullable = "yes"
+			}
+			if c.Nullable != nil && !*c.Nullable {
+				nullable = "no"
+			}
+			def := ""
+			if c.DefaultValue != nil {
+				def = *c.DefaultValue
+			}
+			desc := ""
+			if c.Description != nil {
+				desc = *c.Description
+			}
+			sb.WriteString(fmt.Sprintf("| `%s` | %s | %s | %s | %s | %s |\n",
+				mdCell(c.Name), mdCell(c.Type), nullable,
+				mdCell(strings.Join(keys, ", ")), mdCell(def), mdCell(desc)))
+		}
+		if len(t.Indexes) > 0 {
+			sb.WriteString("\n**Indexes:**\n\n")
+			for _, idx := range t.Indexes {
+				line := fmt.Sprintf("- `%s`", idx.Name)
+				if idx.Type != "" {
+					line += fmt.Sprintf(" (%s)", idx.Type)
+				}
+				if len(idx.Fields) > 0 {
+					line += ": " + strings.Join(idx.Fields, ", ")
+				}
+				sb.WriteString(line + "\n")
+			}
+		}
+	}
+
+	nosql := strings.TrimSpace(string(schema.NoSQLSchema))
+	if nosql != "" && nosql != "null" && nosql != "{}" {
+		sb.WriteString("\n## NoSQL Schema\n\n```json\n")
+		sb.WriteString(nosql)
+		sb.WriteString("\n```\n")
+	}
+
+	return sb.String()
+}
+
+func mdCell(s string) string {
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "|", "\\|")
+	return s
 }

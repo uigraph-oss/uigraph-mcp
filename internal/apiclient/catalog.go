@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
@@ -58,12 +59,13 @@ type ServiceDoc struct {
 }
 
 type ServiceDB struct {
-	ID               string    `json:"id"`
-	DBName           string    `json:"dbName"`
-	DBType           string    `json:"dbType"`
-	Dialect          string    `json:"dialect"`
-	SchemaTokenCount int       `json:"schemaTokenCount"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	ID               string          `json:"id"`
+	DBName           string          `json:"dbName"`
+	DBType           string          `json:"dbType"`
+	Dialect          string          `json:"dialect"`
+	SchemaJSON       json.RawMessage `json:"schemaJson"`
+	SchemaTokenCount int             `json:"schemaTokenCount"`
+	UpdatedAt        time.Time       `json:"updatedAt"`
 }
 
 type ServiceDiagram struct {
