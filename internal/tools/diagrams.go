@@ -13,12 +13,10 @@ import (
 func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_diagrams",
 		mcp.WithDescription("List architecture diagrams in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 	), h.listDiagrams)
 
 	s.AddTool(mcp.NewTool("get_diagram",
 		mcp.WithDescription("Get an architecture diagram's details and a mermaid rendering of it"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
 		mcp.WithBoolean("include_content", mcp.Description("Include the raw ReactFlow diagram content in addition to the mermaid rendering")),
 		mcp.WithBoolean("include_thumbnail", mcp.Description("Include a thumbnailURL for the diagram's preview image, if one exists")),
@@ -26,7 +24,7 @@ func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 }
 
 func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -52,7 +50,7 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 }
 
 func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

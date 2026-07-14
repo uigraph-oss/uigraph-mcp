@@ -12,20 +12,18 @@ import (
 func (h *Handler) RegisterSchemaTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_service_dbs",
 		mcp.WithDescription("List database schemas attached to a service"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.listServiceDBs)
 
 	s.AddTool(mcp.NewTool("get_db_schema",
 		mcp.WithDescription("Get the full database schema for a service DB"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("db_id", mcp.Required(), mcp.Description("Service DB ID")),
 	), h.getDBSchema)
 }
 
 func (h *Handler) listServiceDBs(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -57,7 +55,7 @@ func (h *Handler) listServiceDBs(ctx context.Context, req mcp.CallToolRequest) (
 }
 
 func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

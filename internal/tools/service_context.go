@@ -14,13 +14,12 @@ import (
 func (h *Handler) RegisterServiceContextTool(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("get_service_context",
 		mcp.WithDescription("Get comprehensive context for a service: metadata, API specs, DB schemas, diagrams, and docs. Use this as the primary tool when you need to understand a service."),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
 	), h.getServiceContext)
 }
 
 func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

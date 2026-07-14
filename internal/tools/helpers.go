@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/uigraph/mcp/internal/apiclient"
 	"github.com/uigraph/mcp/internal/tokencount"
 )
@@ -78,10 +77,7 @@ func ClientFromCtx(ctx context.Context) (string, string) {
 	return clientFromCtx(ctx)
 }
 
-func (h *Handler) orgID(ctx context.Context, req mcp.CallToolRequest) (string, error) {
-	if v := req.GetString("org_id", ""); v != "" {
-		return v, nil
-	}
+func (h *Handler) orgID(ctx context.Context) (string, error) {
 	if v := orgFromCtx(ctx); v != "" {
 		return v, nil
 	}
