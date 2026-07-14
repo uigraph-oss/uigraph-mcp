@@ -11,12 +11,14 @@ import (
 )
 
 func (h *Handler) RegisterSchemaTools(s *mcpserver.MCPServer) {
-	s.AddTool(mcp.NewTool("list_service_dbs",
+	s.AddTool(mcp.NewTool(
+		"list_service_dbs",
 		mcp.WithDescription("List database schemas attached to a service"),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.listServiceDBs)
 
-	s.AddTool(mcp.NewTool("get_db_schema",
+	s.AddTool(mcp.NewTool(
+		"get_db_schema",
 		mcp.WithDescription("Get the full database schema for a service DB"),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("db_id", mcp.Required(), mcp.Description("Service DB ID")),
@@ -46,7 +48,6 @@ func (h *Handler) listServiceDBs(ctx context.Context, req mcp.CallToolRequest) (
 		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", db.DBName))
 		sb.WriteString(fmt.Sprintf("  - **Type:** %s\n", db.DBType))
 		sb.WriteString(fmt.Sprintf("  - **Dialect:** %s\n", db.Dialect))
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", db.SchemaTokenCount))
 		sb.WriteString("\n")
 	}
 	if len(dbs) == 0 {

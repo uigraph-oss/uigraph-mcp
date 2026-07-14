@@ -104,7 +104,6 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", db.DBName))
 		sb.WriteString(fmt.Sprintf("  - **Type:** %s\n", db.DBType))
 		sb.WriteString(fmt.Sprintf("  - **Dialect:** %s\n", db.Dialect))
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", db.SchemaTokenCount))
 		sb.WriteString("\n")
 		totalRawTokens += db.SchemaTokenCount
 		resourceIDs = append(resourceIDs, db.ID)
@@ -126,7 +125,6 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 		if doc.Description != "" {
 			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", doc.Description))
 		}
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", doc.DocTokenCount))
 		sb.WriteString("\n")
 		totalRawTokens += doc.DocTokenCount
 	}

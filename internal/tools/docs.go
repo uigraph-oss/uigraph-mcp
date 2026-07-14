@@ -11,17 +11,20 @@ import (
 )
 
 func (h *Handler) RegisterDocTools(s *mcpserver.MCPServer) {
-	s.AddTool(mcp.NewTool("list_docs",
+	s.AddTool(mcp.NewTool(
+		"list_docs",
 		mcp.WithDescription("List documents in a UIGraph organisation"),
 		mcp.WithString("search_by_name", mcp.Description("Optional filter matching document file name or description")),
 	), h.listDocs)
 
-	s.AddTool(mcp.NewTool("list_service_docs",
+	s.AddTool(mcp.NewTool(
+		"list_service_docs",
 		mcp.WithDescription("List documents attached to a service"),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.listServiceDocs)
 
-	s.AddTool(mcp.NewTool("get_doc",
+	s.AddTool(mcp.NewTool(
+		"get_doc",
 		mcp.WithDescription("Get a document's metadata plus its content inlined for common text and image types"),
 		mcp.WithString("doc_id", mcp.Required(), mcp.Description("Document ID")),
 	), h.getDoc)
@@ -53,7 +56,6 @@ func (h *Handler) listDocs(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 		if d.Description != "" {
 			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", d.Description))
 		}
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", d.DocTokenCount))
 		sb.WriteString("\n")
 	}
 	if len(docs) == 0 {
@@ -87,7 +89,6 @@ func (h *Handler) listServiceDocs(ctx context.Context, req mcp.CallToolRequest) 
 		if d.Description != "" {
 			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", d.Description))
 		}
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", d.DocTokenCount))
 		sb.WriteString("\n")
 	}
 	if len(docs) == 0 {
