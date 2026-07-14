@@ -3,6 +3,7 @@ package apiclient
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -70,10 +71,20 @@ type ServiceDiagram struct {
 	DiagramID string `json:"diagramId"`
 }
 
-func (c *Client) ListServices(ctx context.Context, token, orgID string, folderID, teamID *string) ([]Service, error) {
+func (c *Client) ListServices(ctx context.Context, token, orgID string, folderID, teamID, search *string) ([]Service, error) {
 	path := fmt.Sprintf("/api/v1/orgs/%s/services", orgID)
+	q := url.Values{}
 	if folderID != nil {
-		path += "?folderId=" + *folderID
+		q.Set("folderId", *folderID)
+	}
+	if teamID != nil {
+		q.Set("teamId", *teamID)
+	}
+	if search != nil {
+		q.Set("search", *search)
+	}
+	if len(q) > 0 {
+		path += "?" + q.Encode()
 	}
 	var resp struct {
 		Services []Service `json:"services"`

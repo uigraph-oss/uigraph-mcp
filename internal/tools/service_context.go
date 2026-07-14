@@ -7,33 +7,10 @@ import (
 	"sync"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/uigraph/mcp/internal/apiclient"
 )
 
-func (h *Handler) RegisterServiceContextTool(s *mcpserver.MCPServer) {
-	s.AddTool(mcp.NewTool("get_service_context",
-		mcp.WithDescription("Get comprehensive context for a service: metadata, API specs, DB schemas, diagrams, and docs. Use this as the primary tool when you need to understand a service."),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
-	), h.getServiceContext)
-}
-
-func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx)
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	serviceID, err := req.RequireString("service_id")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	token := tokenFromCtx(ctx)
-
-	svc, err := h.client.GetService(ctx, token, orgID, serviceID)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("service not found: %s", serviceID)), nil
-	}
-
+func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, svc *apiclient.Service) *mcp.CallToolResult {
 	// Fan out parallel fetches
 	type result[T any] struct {
 		val T
@@ -49,10 +26,26 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	)
 
 	wg.Add(4)
-	go func() { defer wg.Done(); v, e := h.client.ListAPIGroups(ctx, token, orgID, svc.ID); apiGroupsCh <- result[[]apiclient.APIGroup]{v, e} }()
-	go func() { defer wg.Done(); v, e := h.client.ListServiceDBs(ctx, token, orgID, svc.ID); dbsCh <- result[[]apiclient.ServiceDB]{v, e} }()
-	go func() { defer wg.Done(); v, e := h.client.ListServiceDiagrams(ctx, token, orgID, svc.ID); diagramsCh <- result[[]apiclient.ServiceDiagram]{v, e} }()
-	go func() { defer wg.Done(); v, e := h.client.ListServiceDocs(ctx, token, orgID, svc.ID); docsCh <- result[[]apiclient.ServiceDoc]{v, e} }()
+	go func() {
+		defer wg.Done()
+		v, e := h.client.ListAPIGroups(ctx, token, orgID, svc.ID)
+		apiGroupsCh <- result[[]apiclient.APIGroup]{v, e}
+	}()
+	go func() {
+		defer wg.Done()
+		v, e := h.client.ListServiceDBs(ctx, token, orgID, svc.ID)
+		dbsCh <- result[[]apiclient.ServiceDB]{v, e}
+	}()
+	go func() {
+		defer wg.Done()
+		v, e := h.client.ListServiceDiagrams(ctx, token, orgID, svc.ID)
+		diagramsCh <- result[[]apiclient.ServiceDiagram]{v, e}
+	}()
+	go func() {
+		defer wg.Done()
+		v, e := h.client.ListServiceDocs(ctx, token, orgID, svc.ID)
+		docsCh <- result[[]apiclient.ServiceDoc]{v, e}
+	}()
 	wg.Wait()
 
 	apiGroups := (<-apiGroupsCh).val
@@ -141,7 +134,7 @@ func (h *Handler) getServiceContext(ctx context.Context, req mcp.CallToolRequest
 	text := sb.String()
 
 	// Use sum of actual file token counts as raw equivalent (exact)
-	go h.recordUsage(ctx, orgID, token, "get_service_context", resourceIDs, text, &totalRawTokens)
+	go h.recordUsage(ctx, orgID, token, "get_service", resourceIDs, text, &totalRawTokens)
 
-	return mcp.NewToolResultText(text), nil
+	return mcp.NewToolResultText(text)
 }

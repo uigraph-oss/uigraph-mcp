@@ -12,6 +12,7 @@ import (
 func (h *Handler) RegisterMapTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_maps",
 		mcp.WithDescription("List UI journey maps in a UIGraph organisation"),
+		mcp.WithString("search_by_name", mcp.Description("Optional filter matching map name")),
 	), h.listMaps)
 
 	s.AddTool(mcp.NewTool("get_map",
@@ -27,7 +28,12 @@ func (h *Handler) listMaps(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	}
 	token := tokenFromCtx(ctx)
 
-	maps, err := h.client.ListMaps(ctx, token, orgID, nil, nil)
+	var search *string
+	if s := req.GetString("search_by_name", ""); s != "" {
+		search = &s
+	}
+
+	maps, err := h.client.ListMaps(ctx, token, orgID, nil, nil, search)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

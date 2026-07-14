@@ -13,6 +13,7 @@ import (
 func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_diagrams",
 		mcp.WithDescription("List architecture diagrams in a UIGraph organisation"),
+		mcp.WithString("search_by_name", mcp.Description("Optional filter matching diagram name")),
 	), h.listDiagrams)
 
 	s.AddTool(mcp.NewTool("get_diagram",
@@ -30,7 +31,12 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 	}
 	token := tokenFromCtx(ctx)
 
-	diagrams, err := h.client.ListDiagrams(ctx, token, orgID, nil, nil)
+	var search *string
+	if s := req.GetString("search_by_name", ""); s != "" {
+		search = &s
+	}
+
+	diagrams, err := h.client.ListDiagrams(ctx, token, orgID, nil, nil, search)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

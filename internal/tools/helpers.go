@@ -114,11 +114,11 @@ func (h *Handler) recordUsage(reqCtx context.Context, orgID, token, toolName str
 }
 
 var selfRecordingTools = map[string]bool{
-	"get_service_context": true,
-	"get_api_spec":        true,
-	"get_db_schema":       true,
-	"get_diagram":         true,
-	"get_map":             true,
+	"get_service":   true,
+	"get_api_spec":  true,
+	"get_db_schema": true,
+	"get_diagram":   true,
+	"get_map":       true,
 }
 
 func RecordToolCall(reqCtx context.Context, client *apiclient.Client, toolName, responseText string) {
