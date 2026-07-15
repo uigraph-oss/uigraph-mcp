@@ -46,7 +46,9 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	streamable := mcpserver.NewStreamableHTTPServer(s,
 		mcpserver.WithStateLess(true),
 		mcpserver.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
-			ctx = tools.WithToken(ctx, extractToken(r))
+			token, scheme := extractCredential(r)
+			ctx = tools.WithToken(ctx, token)
+			ctx = apiclient.WithScheme(ctx, scheme)
 			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
 			ctx = tools.WithClient(ctx, r.Header.Get("X-UIGraph-Client-Name"), r.Header.Get("X-UIGraph-Client-Version"))
 			ctx = tools.WithStart(ctx, time.Now())
@@ -77,10 +79,12 @@ func toolResultText(res *mcp.CallToolResult) string {
 	return sb.String()
 }
 
-func extractToken(r *http.Request) string {
-	v := r.Header.Get("Authorization")
-	if after, ok := strings.CutPrefix(v, "Bearer "); ok {
-		return after
+func extractCredential(r *http.Request) (string, apiclient.Scheme) {
+	if key := r.Header.Get("X-API-Key"); key != "" {
+		return key, apiclient.SchemeAPIKey
 	}
-	return ""
+	if after, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
+		return after, apiclient.SchemeBearer
+	}
+	return "", ""
 }

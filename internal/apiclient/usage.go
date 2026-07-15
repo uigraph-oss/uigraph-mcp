@@ -31,7 +31,7 @@ func (c *Client) RecordUsage(ctx context.Context, token, orgID string, e UsageEv
 	if err != nil {
 		return fmt.Errorf("apiclient: build usage request: %w", err)
 	}
-	setAuth(req, token)
+	setAuth(ctx, req, token)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
