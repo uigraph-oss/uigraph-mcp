@@ -20,8 +20,7 @@
 | `get_map` | Get map frames and focal points |
 | `list_service_dbs` | List database schemas attached to a service |
 | `get_db_schema` | Get a database schema definition |
-| `list_docs` | List org documents (supports `search_by_name`) |
-| `list_service_docs` | List documents attached to a service |
+| `list_docs` | List org documents (supports `search_by_name`, or `service_id` for docs attached to a service) |
 | `get_doc` | Get a document's metadata plus inlined content for text/image types |
 | `list_test_packs` | List test packs for a service |
 | `get_test_pack` | Get a single test pack by ID |

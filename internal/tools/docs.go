@@ -13,15 +13,10 @@ import (
 func (h *Handler) RegisterDocTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool(
 		"list_docs",
-		mcp.WithDescription("List documents in a UIGraph organisation"),
+		mcp.WithDescription("List documents in a UIGraph organisation, or documents attached to a service when service_id is provided"),
 		mcp.WithString("search_by_name", mcp.Description("Optional filter matching document file name or description")),
+		mcp.WithString("service_id", mcp.Description("Optional service ID to list only documents attached to that service")),
 	), h.listDocs)
-
-	s.AddTool(mcp.NewTool(
-		"list_service_docs",
-		mcp.WithDescription("List documents attached to a service"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-	), h.listServiceDocs)
 
 	s.AddTool(mcp.NewTool(
 		"get_doc",
@@ -37,6 +32,29 @@ func (h *Handler) listDocs(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	}
 	token := tokenFromCtx(ctx)
 
+	if serviceID := req.GetString("service_id", ""); serviceID != "" {
+		docs, err := h.client.ListServiceDocs(ctx, token, orgID, serviceID)
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
+		}
+
+		var sb strings.Builder
+		sb.WriteString("# Service documents\n\n")
+		for _, d := range docs {
+			sb.WriteString(fmt.Sprintf("- **DocID:** `%s`\n", d.ID))
+			sb.WriteString(fmt.Sprintf("  - **FileName:** %s\n", d.FileName))
+			sb.WriteString(fmt.Sprintf("  - **FileType:** %s\n", d.FileType))
+			if d.Description != "" {
+				sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", d.Description))
+			}
+			sb.WriteString("\n")
+		}
+		if len(docs) == 0 {
+			sb.WriteString("No documents found.\n")
+		}
+		return mcp.NewToolResultText(sb.String()), nil
+	}
+
 	var search *string
 	if s := req.GetString("search_by_name", ""); s != "" {
 		search = &s
@@ -49,39 +67,6 @@ func (h *Handler) listDocs(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 
 	var sb strings.Builder
 	sb.WriteString("# Documents\n\n")
-	for _, d := range docs {
-		sb.WriteString(fmt.Sprintf("- **DocID:** `%s`\n", d.ID))
-		sb.WriteString(fmt.Sprintf("  - **FileName:** %s\n", d.FileName))
-		sb.WriteString(fmt.Sprintf("  - **FileType:** %s\n", d.FileType))
-		if d.Description != "" {
-			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", d.Description))
-		}
-		sb.WriteString("\n")
-	}
-	if len(docs) == 0 {
-		sb.WriteString("No documents found.\n")
-	}
-	return mcp.NewToolResultText(sb.String()), nil
-}
-
-func (h *Handler) listServiceDocs(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx)
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	serviceID, err := req.RequireString("service_id")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	token := tokenFromCtx(ctx)
-
-	docs, err := h.client.ListServiceDocs(ctx, token, orgID, serviceID)
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-
-	var sb strings.Builder
-	sb.WriteString("# Service documents\n\n")
 	for _, d := range docs {
 		sb.WriteString(fmt.Sprintf("- **DocID:** `%s`\n", d.ID))
 		sb.WriteString(fmt.Sprintf("  - **FileName:** %s\n", d.FileName))

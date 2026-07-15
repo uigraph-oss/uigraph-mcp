@@ -63,7 +63,7 @@ func (c *Client) ConvertDiagramToMermaid(ctx context.Context, token, content str
 	var resp struct {
 		Mermaid string `json:"mermaid"`
 	}
-	if err := c.postGateway(ctx, token, "/v1/sync/diagrams/to-mermaid", req, &resp); err != nil {
+	if err := c.postGateway(ctx, token, "/v1/util/diagrams/to-mermaid", req, &resp); err != nil {
 		return "", err
 	}
 	return resp.Mermaid, nil

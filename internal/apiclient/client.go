@@ -7,9 +7,26 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
+
+type Scheme string
+
+const (
+	SchemeAPIKey Scheme = "api-key"
+	SchemeBearer Scheme = "bearer"
+)
+
+type schemeKey struct{}
+
+func WithScheme(ctx context.Context, scheme Scheme) context.Context {
+	return context.WithValue(ctx, schemeKey{}, scheme)
+}
+
+func schemeFromCtx(ctx context.Context) Scheme {
+	v, _ := ctx.Value(schemeKey{}).(Scheme)
+	return v
+}
 
 type Client struct {
 	baseURL    string
@@ -25,12 +42,28 @@ func New(baseURL, gatewayURL string) *Client {
 	}
 }
 
-func setAuth(req *http.Request, token string) {
-	if strings.HasPrefix(token, "uig_") {
+func setAuth(ctx context.Context, req *http.Request, token string) {
+	scheme := schemeFromCtx(ctx)
+	if scheme == SchemeAPIKey {
 		req.Header.Set("X-API-Key", token)
 		return
 	}
-	req.Header.Set("Authorization", "Bearer "+token)
+	if scheme == SchemeBearer {
+		req.Header.Set("Authorization", "Bearer "+token)
+		return
+	}
+}
+
+func setGatewayAuth(ctx context.Context, req *http.Request, token string) {
+	scheme := schemeFromCtx(ctx)
+	if scheme == SchemeAPIKey {
+		req.Header.Set("X-API-Token", token)
+		return
+	}
+	if scheme == SchemeBearer {
+		req.Header.Set("Authorization", "Bearer "+token)
+		return
+	}
 }
 
 func (c *Client) get(ctx context.Context, token, path string, out any) error {
@@ -38,7 +71,7 @@ func (c *Client) get(ctx context.Context, token, path string, out any) error {
 	if err != nil {
 		return fmt.Errorf("apiclient: build request: %w", err)
 	}
-	setAuth(req, token)
+	setAuth(ctx, req, token)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("apiclient: do request: %w", err)
@@ -67,7 +100,7 @@ func (c *Client) postGateway(ctx context.Context, token, path string, in, out an
 		return fmt.Errorf("apiclient: build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-API-Token", token)
+	setGatewayAuth(ctx, req, token)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("apiclient: do request: %w", err)
@@ -91,7 +124,7 @@ func (c *Client) getRaw(ctx context.Context, token, path string) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: build request: %w", err)
 	}
-	setAuth(req, token)
+	setAuth(ctx, req, token)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: do request: %w", err)
