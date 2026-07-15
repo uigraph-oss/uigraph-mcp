@@ -3,6 +3,7 @@ package apiclient
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -16,8 +17,21 @@ type Diagram struct {
 	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
-func (c *Client) ListDiagrams(ctx context.Context, token, orgID string, folderID, teamID *string) ([]Diagram, error) {
+func (c *Client) ListDiagrams(ctx context.Context, token, orgID string, folderID, teamID, search *string) ([]Diagram, error) {
 	path := fmt.Sprintf("/api/v1/orgs/%s/diagrams", orgID)
+	q := url.Values{}
+	if folderID != nil {
+		q.Set("folderId", *folderID)
+	}
+	if teamID != nil {
+		q.Set("teamId", *teamID)
+	}
+	if search != nil {
+		q.Set("search", *search)
+	}
+	if len(q) > 0 {
+		path += "?" + q.Encode()
+	}
 	var resp struct {
 		Diagrams []Diagram `json:"diagrams"`
 	}

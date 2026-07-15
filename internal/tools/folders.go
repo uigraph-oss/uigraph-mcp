@@ -12,13 +12,12 @@ import (
 func (h *Handler) RegisterFolderTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_folders",
 		mcp.WithDescription("List folders in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("type", mcp.Description("Filter by type: service, diagram, map, doc")),
 	), h.listFolders)
 }
 
 func (h *Handler) listFolders(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

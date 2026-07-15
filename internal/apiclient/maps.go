@@ -3,6 +3,7 @@ package apiclient
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -32,11 +33,25 @@ type Folder struct {
 	Order    float64 `json:"order"`
 }
 
-func (c *Client) ListMaps(ctx context.Context, token, orgID string, folderID, teamID *string) ([]Map, error) {
+func (c *Client) ListMaps(ctx context.Context, token, orgID string, folderID, teamID, search *string) ([]Map, error) {
+	path := fmt.Sprintf("/api/v1/orgs/%s/maps", orgID)
+	q := url.Values{}
+	if folderID != nil {
+		q.Set("folderId", *folderID)
+	}
+	if teamID != nil {
+		q.Set("teamId", *teamID)
+	}
+	if search != nil {
+		q.Set("search", *search)
+	}
+	if len(q) > 0 {
+		path += "?" + q.Encode()
+	}
 	var resp struct {
 		Maps []Map `json:"maps"`
 	}
-	return resp.Maps, c.get(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/maps", orgID), &resp)
+	return resp.Maps, c.get(ctx, token, path, &resp)
 }
 
 func (c *Client) GetMap(ctx context.Context, token, orgID, mapID string) (*Map, error) {

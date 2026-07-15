@@ -10,41 +10,43 @@ import (
 )
 
 func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
-	s.AddTool(mcp.NewTool("list_services",
+	s.AddTool(mcp.NewTool(
+		"list_services",
 		mcp.WithDescription("List all services in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("folder_id", mcp.Description("Optional folder ID filter")),
+		mcp.WithString("search_by_name", mcp.Description("Optional filter matching service name")),
 	), h.listServices)
 
-	s.AddTool(mcp.NewTool("get_service",
-		mcp.WithDescription("Get full details and stats for a service"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
+	s.AddTool(mcp.NewTool(
+		"get_service",
+		mcp.WithDescription("Get full details and stats for a service. Set include_context to also return API specs, DB schemas, diagrams, and docs — the comprehensive context to understand a service."),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
+		mcp.WithBoolean("include_context", mcp.Description("When true, also return the service's API specs, DB schemas, diagrams, and documentation")),
 	), h.getService)
 
-	s.AddTool(mcp.NewTool("list_api_groups",
+	s.AddTool(mcp.NewTool(
+		"list_api_groups",
 		mcp.WithDescription("List API specification groups for a service"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 	), h.listAPIGroups)
 
-	s.AddTool(mcp.NewTool("get_api_spec",
+	s.AddTool(mcp.NewTool(
+		"get_api_spec",
 		mcp.WithDescription("Get the full API specification content (OpenAPI/GraphQL/gRPC) for an API group"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
 	), h.getAPISpec)
 
-	s.AddTool(mcp.NewTool("list_endpoints",
+	s.AddTool(mcp.NewTool(
+		"list_endpoints",
 		mcp.WithDescription("List all API endpoints for a service or API group"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
 		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
 	), h.listEndpoints)
 }
 
 func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -54,8 +56,12 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 	if fid := req.GetString("folder_id", ""); fid != "" {
 		folderID = &fid
 	}
+	var search *string
+	if s := req.GetString("search_by_name", ""); s != "" {
+		search = &s
+	}
 
-	svcs, err := h.client.ListServices(ctx, token, orgID, folderID, nil)
+	svcs, err := h.client.ListServices(ctx, token, orgID, folderID, nil, search)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -80,7 +86,7 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 }
 
 func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -93,6 +99,10 @@ func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	svc, err := h.client.GetService(ctx, token, orgID, serviceID)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
+	}
+
+	if req.GetBool("include_context", false) {
+		return h.getServiceContext(ctx, orgID, token, svc), nil
 	}
 
 	var sb strings.Builder
@@ -108,11 +118,13 @@ func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if svc.Description != "" {
 		sb.WriteString(fmt.Sprintf("- **Description:** %s\n", svc.Description))
 	}
-	return mcp.NewToolResultText(sb.String()), nil
+	text := sb.String()
+	go h.recordUsage(ctx, orgID, token, "get_service", []string{svc.ID}, text, nil)
+	return mcp.NewToolResultText(text), nil
 }
 
 func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -146,7 +158,7 @@ func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*
 }
 
 func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -194,7 +206,7 @@ func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp
 }
 
 func (h *Handler) listEndpoints(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -225,7 +237,7 @@ func (h *Handler) listEndpoints(ctx context.Context, req mcp.CallToolRequest) (*
 		if len(e.Tags) > 0 {
 			sb.WriteString(fmt.Sprintf("  - **Tags:** %s\n", strings.Join(e.Tags, ", ")))
 		}
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", e.TokenCount))
+
 		sb.WriteString("\n")
 	}
 	if len(endpoints) == 0 {

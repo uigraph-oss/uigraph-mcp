@@ -8,19 +8,30 @@
 
 | Tool | Description |
 |---|---|
-| `get_service_context` | Rich context for a service (catalog, APIs, schemas, diagrams) |
-| `list_services` | List services in an organization |
-| `get_service` | Get a single service by ID or slug |
+| `list_services` | List services in an organization (supports `search_by_name`) |
+| `get_service` | Get a single service by ID; set `include_context` for full context (APIs, schemas, diagrams, docs) |
 | `list_api_groups` | List API groups for a service |
 | `get_api_spec` | Get the OpenAPI spec for an API group |
 | `list_endpoints` | List endpoints in an API group |
 | `list_folders` | List folder hierarchy |
-| `list_diagrams` | List diagrams in a folder |
+| `list_diagrams` | List diagrams in a folder (supports `search_by_name`) |
 | `get_diagram` | Get diagram content and metadata |
-| `list_maps` | List system maps |
+| `list_maps` | List system maps (supports `search_by_name`) |
 | `get_map` | Get map frames and focal points |
 | `list_service_dbs` | List database schemas attached to a service |
 | `get_db_schema` | Get a database schema definition |
+| `list_docs` | List org documents (supports `search_by_name`) |
+| `list_service_docs` | List documents attached to a service |
+| `get_doc` | Get a document's metadata plus inlined content for text/image types |
+| `list_test_packs` | List test packs for a service |
+| `get_test_pack` | Get a single test pack by ID |
+| `list_test_cases` | List test cases for a service, optionally by test pack |
+| `list_test_runs` | List test runs for a service, optionally by test pack |
+| `get_test_run` | Get a single test run by ID |
+| `list_test_runs_summary` | List test runs with pass/fail/skip/block counts |
+| `list_test_run_results` | List per-test-case results for a test run |
+| `list_teams` | List teams in an organization |
+| `get_team` | Get a team with its members |
 
 ## Local development
 

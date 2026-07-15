@@ -11,14 +11,15 @@ import (
 )
 
 func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
-	s.AddTool(mcp.NewTool("list_diagrams",
+	s.AddTool(mcp.NewTool(
+		"list_diagrams",
 		mcp.WithDescription("List architecture diagrams in a UIGraph organisation"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
+		mcp.WithString("search_by_name", mcp.Description("Optional filter matching diagram name")),
 	), h.listDiagrams)
 
-	s.AddTool(mcp.NewTool("get_diagram",
+	s.AddTool(mcp.NewTool(
+		"get_diagram",
 		mcp.WithDescription("Get an architecture diagram's details and a mermaid rendering of it"),
-		mcp.WithString("org_id", mcp.Description("Organisation ID (defaults to the configured default org)")),
 		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
 		mcp.WithBoolean("include_content", mcp.Description("Include the raw ReactFlow diagram content in addition to the mermaid rendering")),
 		mcp.WithBoolean("include_thumbnail", mcp.Description("Include a thumbnailURL for the diagram's preview image, if one exists")),
@@ -26,13 +27,18 @@ func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 }
 
 func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	token := tokenFromCtx(ctx)
 
-	diagrams, err := h.client.ListDiagrams(ctx, token, orgID, nil, nil)
+	var search *string
+	if s := req.GetString("search_by_name", ""); s != "" {
+		search = &s
+	}
+
+	diagrams, err := h.client.ListDiagrams(ctx, token, orgID, nil, nil, search)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -42,7 +48,6 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 	for _, d := range diagrams {
 		sb.WriteString(fmt.Sprintf("- **DiagramID:** `%s`\n", d.ID))
 		sb.WriteString(fmt.Sprintf("  - **Name:** %s\n", d.Name))
-		sb.WriteString(fmt.Sprintf("  - **Tokens:** ~%d\n", d.ContentTokenCount))
 		sb.WriteString("\n")
 	}
 	if len(diagrams) == 0 {
@@ -52,7 +57,7 @@ func (h *Handler) listDiagrams(ctx context.Context, req mcp.CallToolRequest) (*m
 }
 
 func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	orgID, err := h.orgID(ctx, req)
+	orgID, err := h.orgID(ctx)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -80,7 +85,6 @@ func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("# %s\n\n", dg.Name))
 	sb.WriteString(fmt.Sprintf("- **DiagramID:** `%s`\n", dg.ID))
-	sb.WriteString(fmt.Sprintf("- **Tokens:** ~%d\n", dg.ContentTokenCount))
 	sb.WriteString(fmt.Sprintf("- **Updated:** %s\n\n", dg.UpdatedAt.Format(time.RFC3339)))
 	sb.WriteString("## Mermaid\n\n")
 	sb.WriteString("```mermaid\n")
