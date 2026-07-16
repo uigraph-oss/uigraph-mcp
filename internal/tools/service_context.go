@@ -153,12 +153,15 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 	sb.WriteString(fmt.Sprintf("### Upstream — this service depends on (%d)\n\n", len(upstream)))
 	for _, dep := range upstream {
 		sb.WriteString(fmt.Sprintf("- **%s** → %s\n", dep.Name, dep.ProviderName))
-		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s · **Status:** %s\n", dep.Type, dep.Criticality, dep.OnboardingStatus))
-		if dep.API != nil {
-			sb.WriteString(fmt.Sprintf("  - **API:** %s\n", *dep.API))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s\n", dependencyTypeLabel(dep.Type), dep.Criticality))
+		if dep.APIGroupName != nil {
+			sb.WriteString(fmt.Sprintf("  - **API Group:** %s\n", *dep.APIGroupName))
 		}
-		if len(dep.Operations) > 0 {
-			sb.WriteString(fmt.Sprintf("  - **Operations:** %s\n", strings.Join(dep.Operations, ", ")))
+		if len(dep.APIEndpointNames) > 0 {
+			sb.WriteString(fmt.Sprintf("  - **API Endpoints:** %s\n", strings.Join(dep.APIEndpointNames, ", ")))
+		}
+		if dep.DatabaseName != nil {
+			sb.WriteString(fmt.Sprintf("  - **Database:** %s\n", *dep.DatabaseName))
 		}
 		if dep.Description != "" {
 			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", dep.Description))
@@ -173,12 +176,15 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 			consumer = dep.Consumer.Name
 		}
 		sb.WriteString(fmt.Sprintf("- **%s** ← %s\n", dep.Name, consumer))
-		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s · **Status:** %s\n", dep.Type, dep.Criticality, dep.OnboardingStatus))
-		if dep.API != nil {
-			sb.WriteString(fmt.Sprintf("  - **API:** %s\n", *dep.API))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s\n", dependencyTypeLabel(dep.Type), dep.Criticality))
+		if dep.APIGroupName != nil {
+			sb.WriteString(fmt.Sprintf("  - **API Group:** %s\n", *dep.APIGroupName))
 		}
-		if len(dep.Operations) > 0 {
-			sb.WriteString(fmt.Sprintf("  - **Operations:** %s\n", strings.Join(dep.Operations, ", ")))
+		if len(dep.APIEndpointNames) > 0 {
+			sb.WriteString(fmt.Sprintf("  - **API Endpoints:** %s\n", strings.Join(dep.APIEndpointNames, ", ")))
+		}
+		if dep.DatabaseName != nil {
+			sb.WriteString(fmt.Sprintf("  - **Database:** %s\n", *dep.DatabaseName))
 		}
 		sb.WriteString("\n")
 	}
@@ -189,4 +195,11 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 	go h.recordUsage(ctx, orgID, token, "get_service", resourceIDs, text, &totalRawTokens)
 
 	return mcp.NewToolResultText(text)
+}
+
+func dependencyTypeLabel(depType string) string {
+	if depType == "" {
+		return "untyped"
+	}
+	return depType
 }

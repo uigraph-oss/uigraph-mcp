@@ -12,9 +12,9 @@ type ServiceDependency struct {
 	Type             string   `json:"type"`
 	Criticality      string   `json:"criticality"`
 	Description      string   `json:"description"`
-	API              *string  `json:"api,omitempty"`
-	Operations       []string `json:"operations"`
-	OnboardingStatus string   `json:"onboardingStatus"`
+	APIGroupName     *string  `json:"apiGroupName,omitempty"`
+	APIEndpointNames []string `json:"apiEndpointNames"`
+	DatabaseName     *string  `json:"databaseName,omitempty"`
 	Direction        string   `json:"direction"`
 	Consumer         *Service `json:"consumer,omitempty"`
 	Provider         *Service `json:"provider,omitempty"`
