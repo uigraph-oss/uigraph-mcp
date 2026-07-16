@@ -22,10 +22,11 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 		dbsCh       = make(chan result[[]apiclient.ServiceDB], 1)
 		diagramsCh  = make(chan result[[]apiclient.ServiceDiagram], 1)
 		docsCh      = make(chan result[[]apiclient.ServiceDoc], 1)
+		depsCh      = make(chan result[[]apiclient.ServiceDependency], 1)
 		wg          sync.WaitGroup
 	)
 
-	wg.Add(4)
+	wg.Add(5)
 	go func() {
 		defer wg.Done()
 		v, e := h.client.ListAPIGroups(ctx, token, orgID, svc.ID)
@@ -46,12 +47,18 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 		v, e := h.client.ListServiceDocs(ctx, token, orgID, svc.ID)
 		docsCh <- result[[]apiclient.ServiceDoc]{v, e}
 	}()
+	go func() {
+		defer wg.Done()
+		v, e := h.client.ListServiceDependencies(ctx, token, orgID, svc.ID)
+		depsCh <- result[[]apiclient.ServiceDependency]{v, e}
+	}()
 	wg.Wait()
 
 	apiGroups := (<-apiGroupsCh).val
 	dbs := (<-dbsCh).val
 	diagrams := (<-diagramsCh).val
 	docs := (<-docsCh).val
+	deps := (<-depsCh).val
 
 	// fetch endpoints for each group to sum per-endpoint token counts (sequential since we need group IDs first)
 	var allEndpoints []apiclient.APIEndpoint
@@ -129,10 +136,70 @@ func (h *Handler) getServiceContext(ctx context.Context, orgID, token string, sv
 		totalRawTokens += doc.DocTokenCount
 	}
 
+	var upstream, downstream []apiclient.ServiceDependency
+	for _, dep := range deps {
+		if dep.Direction == "upstream" {
+			upstream = append(upstream, dep)
+			continue
+		}
+		if dep.Direction == "downstream" {
+			downstream = append(downstream, dep)
+			continue
+		}
+	}
+
+	sb.WriteString(fmt.Sprintf("\n## Dependencies (%d)\n\n", len(deps)))
+
+	sb.WriteString(fmt.Sprintf("### Upstream — this service depends on (%d)\n\n", len(upstream)))
+	for _, dep := range upstream {
+		sb.WriteString(fmt.Sprintf("- **%s** → %s\n", dep.Name, dep.ProviderName))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s\n", dependencyTypeLabel(dep.Type), dep.Criticality))
+		if dep.APIGroupName != nil {
+			sb.WriteString(fmt.Sprintf("  - **API Group:** %s\n", *dep.APIGroupName))
+		}
+		if len(dep.APIEndpointNames) > 0 {
+			sb.WriteString(fmt.Sprintf("  - **API Endpoints:** %s\n", strings.Join(dep.APIEndpointNames, ", ")))
+		}
+		if dep.DatabaseName != nil {
+			sb.WriteString(fmt.Sprintf("  - **Database:** %s\n", *dep.DatabaseName))
+		}
+		if dep.Description != "" {
+			sb.WriteString(fmt.Sprintf("  - **Description:** %s\n", dep.Description))
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString(fmt.Sprintf("### Downstream — services that depend on this (%d)\n\n", len(downstream)))
+	for _, dep := range downstream {
+		consumer := ""
+		if dep.Consumer != nil {
+			consumer = dep.Consumer.Name
+		}
+		sb.WriteString(fmt.Sprintf("- **%s** ← %s\n", dep.Name, consumer))
+		sb.WriteString(fmt.Sprintf("  - **Type:** %s · **Criticality:** %s\n", dependencyTypeLabel(dep.Type), dep.Criticality))
+		if dep.APIGroupName != nil {
+			sb.WriteString(fmt.Sprintf("  - **API Group:** %s\n", *dep.APIGroupName))
+		}
+		if len(dep.APIEndpointNames) > 0 {
+			sb.WriteString(fmt.Sprintf("  - **API Endpoints:** %s\n", strings.Join(dep.APIEndpointNames, ", ")))
+		}
+		if dep.DatabaseName != nil {
+			sb.WriteString(fmt.Sprintf("  - **Database:** %s\n", *dep.DatabaseName))
+		}
+		sb.WriteString("\n")
+	}
+
 	text := sb.String()
 
 	// Use sum of actual file token counts as raw equivalent (exact)
 	go h.recordUsage(ctx, orgID, token, "get_service", resourceIDs, text, &totalRawTokens)
 
 	return mcp.NewToolResultText(text)
+}
+
+func dependencyTypeLabel(depType string) string {
+	if depType == "" {
+		return "untyped"
+	}
+	return depType
 }
