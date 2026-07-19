@@ -16,7 +16,7 @@ func (h *Handler) RegisterTeamTools(s *mcpserver.MCPServer) {
 
 	s.AddTool(mcp.NewTool("get_team",
 		mcp.WithDescription("Get a team with its members"),
-		mcp.WithString("team_id", mcp.Required(), mcp.Description("Team ID")),
+		mcp.WithString("team_id", mcp.Required(), mcp.Description("Team ID (UUID)")),
 	), h.getTeam)
 }
 

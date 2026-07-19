@@ -13,36 +13,36 @@ func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool(
 		"list_services",
 		mcp.WithDescription("List all services in a UIGraph organisation"),
-		mcp.WithString("folder_id", mcp.Description("Optional folder ID filter")),
-		mcp.WithString("team_id", mcp.Description("Optional team ID filter")),
+		mcp.WithString("folder_id", mcp.Description("Optional folder ID filter (UUID)")),
+		mcp.WithString("team_id", mcp.Description("Optional team ID filter (UUID)")),
 		mcp.WithString("search_by_name", mcp.Description("Optional filter matching service name")),
 	), h.listServices)
 
 	s.AddTool(mcp.NewTool(
 		"get_service",
 		mcp.WithDescription("Get full details and stats for a service. Set include_context to also return API specs, DB schemas, diagrams, and docs — the comprehensive context to understand a service."),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
 		mcp.WithBoolean("include_context", mcp.Description("When true, also return the service's API specs, DB schemas, diagrams, and documentation")),
 	), h.getService)
 
 	s.AddTool(mcp.NewTool(
 		"list_api_groups",
 		mcp.WithDescription("List API specification groups for a service"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
 	), h.listAPIGroups)
 
 	s.AddTool(mcp.NewTool(
 		"get_api_spec",
 		mcp.WithDescription("Get the full API specification content (OpenAPI/GraphQL/gRPC) for an API group"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID (UUID)")),
 	), h.getAPISpec)
 
 	s.AddTool(mcp.NewTool(
 		"list_endpoints",
 		mcp.WithDescription("List all API endpoints for a service or API group"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("api_group_id", mcp.Required(), mcp.Description("API group ID (UUID)")),
 	), h.listEndpoints)
 }
 

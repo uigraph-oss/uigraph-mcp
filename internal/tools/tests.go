@@ -12,44 +12,44 @@ import (
 func (h *Handler) RegisterTestTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool("list_test_packs",
 		mcp.WithDescription("List test packs for a service"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
 	), h.listTestPacks)
 
 	s.AddTool(mcp.NewTool("get_test_pack",
 		mcp.WithDescription("Get a single test pack by ID"),
-		mcp.WithString("test_pack_id", mcp.Required(), mcp.Description("Test pack ID")),
+		mcp.WithString("test_pack_id", mcp.Required(), mcp.Description("Test pack ID (UUID)")),
 	), h.getTestPack)
 
 	s.AddTool(mcp.NewTool("list_test_cases",
 		mcp.WithDescription("List test cases for a service, optionally filtered by test pack"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter (UUID)")),
 	), h.listTestCases)
 
 	s.AddTool(mcp.NewTool("list_test_runs",
 		mcp.WithDescription("List test runs for a service, optionally filtered by test pack"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter (UUID)")),
 	), h.listTestRuns)
 
 	s.AddTool(mcp.NewTool("get_test_run",
 		mcp.WithDescription("Get a single test run by ID"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("test_run_id", mcp.Required(), mcp.Description("Test run ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("test_run_id", mcp.Required(), mcp.Description("Test run ID (UUID)")),
 	), h.getTestRun)
 
 	s.AddTool(mcp.NewTool("list_test_runs_summary",
 		mcp.WithDescription("List test runs for a service with aggregated pass/fail/skip/block counts"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("test_pack_id", mcp.Description("Optional test pack ID filter (UUID)")),
 		mcp.WithString("environment", mcp.Description("Optional environment filter")),
 		mcp.WithString("status", mcp.Description("Optional status filter")),
 	), h.listTestRunsSummary)
 
 	s.AddTool(mcp.NewTool("list_test_run_results",
 		mcp.WithDescription("List per-test-case results for a test run"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("test_run_id", mcp.Required(), mcp.Description("Test run ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("test_run_id", mcp.Required(), mcp.Description("Test run ID (UUID)")),
 	), h.listTestRunResults)
 }
 

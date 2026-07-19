@@ -20,7 +20,7 @@ func (h *Handler) RegisterDiagramTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool(
 		"get_diagram",
 		mcp.WithDescription("Get an architecture diagram's details and a mermaid rendering of it"),
-		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID")),
+		mcp.WithString("diagram_id", mcp.Required(), mcp.Description("Diagram ID (UUID)")),
 		mcp.WithBoolean("include_content", mcp.Description("Include the raw ReactFlow diagram content in addition to the mermaid rendering")),
 		mcp.WithBoolean("include_thumbnail", mcp.Description("Include a thumbnailURL for the diagram's preview image, if one exists")),
 	), h.getDiagram)

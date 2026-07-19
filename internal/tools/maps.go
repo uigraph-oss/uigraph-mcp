@@ -17,7 +17,7 @@ func (h *Handler) RegisterMapTools(s *mcpserver.MCPServer) {
 
 	s.AddTool(mcp.NewTool("get_map",
 		mcp.WithDescription("Get a UI journey map with all its frames"),
-		mcp.WithString("map_id", mcp.Required(), mcp.Description("Map ID")),
+		mcp.WithString("map_id", mcp.Required(), mcp.Description("Map ID (UUID)")),
 	), h.getMap)
 }
 
