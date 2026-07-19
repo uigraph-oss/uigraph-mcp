@@ -15,13 +15,13 @@ func (h *Handler) RegisterDocTools(s *mcpserver.MCPServer) {
 		"list_docs",
 		mcp.WithDescription("List documents in a UIGraph organisation, or documents attached to a service when service_id is provided"),
 		mcp.WithString("search_by_name", mcp.Description("Optional filter matching document file name or description")),
-		mcp.WithString("service_id", mcp.Description("Optional service ID to list only documents attached to that service")),
+		mcp.WithString("service_id", mcp.Description("Optional service ID (UUID) to list only documents attached to that service")),
 	), h.listDocs)
 
 	s.AddTool(mcp.NewTool(
 		"get_doc",
 		mcp.WithDescription("Get a document's metadata plus its content inlined for common text and image types"),
-		mcp.WithString("doc_id", mcp.Required(), mcp.Description("Document ID")),
+		mcp.WithString("doc_id", mcp.Required(), mcp.Description("Document ID (UUID)")),
 	), h.getDoc)
 }
 

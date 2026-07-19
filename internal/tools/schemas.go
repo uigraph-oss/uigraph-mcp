@@ -14,14 +14,14 @@ func (h *Handler) RegisterSchemaTools(s *mcpserver.MCPServer) {
 	s.AddTool(mcp.NewTool(
 		"list_service_dbs",
 		mcp.WithDescription("List database schemas attached to a service"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
 	), h.listServiceDBs)
 
 	s.AddTool(mcp.NewTool(
 		"get_db_schema",
 		mcp.WithDescription("Get the full database schema for a service DB"),
-		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID")),
-		mcp.WithString("db_id", mcp.Required(), mcp.Description("Service DB ID")),
+		mcp.WithString("service_id", mcp.Required(), mcp.Description("Service ID (UUID)")),
+		mcp.WithString("db_id", mcp.Required(), mcp.Description("Service DB ID (UUID)")),
 	), h.getDBSchema)
 }
 
