@@ -14,6 +14,7 @@ func (h *Handler) RegisterCatalogTools(s *mcpserver.MCPServer) {
 		"list_services",
 		mcp.WithDescription("List all services in a UIGraph organisation"),
 		mcp.WithString("folder_id", mcp.Description("Optional folder ID filter")),
+		mcp.WithString("team_id", mcp.Description("Optional team ID filter")),
 		mcp.WithString("search_by_name", mcp.Description("Optional filter matching service name")),
 	), h.listServices)
 
@@ -56,12 +57,16 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 	if fid := req.GetString("folder_id", ""); fid != "" {
 		folderID = &fid
 	}
+	var teamID *string
+	if tid := req.GetString("team_id", ""); tid != "" {
+		teamID = &tid
+	}
 	var search *string
 	if s := req.GetString("search_by_name", ""); s != "" {
 		search = &s
 	}
 
-	svcs, err := h.client.ListServices(ctx, token, orgID, folderID, nil, search)
+	svcs, err := h.client.ListServices(ctx, token, orgID, folderID, teamID, search)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

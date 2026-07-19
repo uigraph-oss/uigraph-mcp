@@ -111,30 +111,33 @@ type meResponse struct {
 }
 
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	token := bearerToken(r)
+	token, scheme := credential(r)
 	if token == "" {
-		http.Error(w, "missing bearer token", http.StatusUnauthorized)
+		http.Error(w, "missing credentials", http.StatusUnauthorized)
 		return
 	}
 
-	me, err := h.client.GetMe(r.Context(), token)
+	ctx := apiclient.WithScheme(r.Context(), scheme)
+	me, err := h.client.GetMe(ctx, token)
 	if err != nil {
 		http.Error(w, "failed to resolve identity", http.StatusBadGateway)
 		return
 	}
 
-	orgs, _ := h.client.GetMyOrgs(r.Context(), token)
+	orgs, _ := h.client.GetMyOrgs(ctx, token)
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(meResponse{Me: me, Orgs: orgs})
 }
 
-func bearerToken(r *http.Request) string {
-	v := r.Header.Get("Authorization")
-	if after, ok := strings.CutPrefix(v, "Bearer "); ok {
-		return after
+func credential(r *http.Request) (string, apiclient.Scheme) {
+	if key := r.Header.Get("X-API-Key"); key != "" {
+		return key, apiclient.SchemeAPIKey
 	}
-	return ""
+	if after, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
+		return after, apiclient.SchemeBearer
+	}
+	return "", ""
 }
 
 func (h *Handler) sweep() {
