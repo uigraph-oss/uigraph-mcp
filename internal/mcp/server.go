@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -49,7 +50,6 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 			token, scheme := extractCredential(r)
 			ctx = tools.WithToken(ctx, token)
 			ctx = apiclient.WithScheme(ctx, scheme)
-			ctx = tools.WithOrg(ctx, r.Header.Get("X-UIGraph-Org-Id"))
 			ctx = tools.WithClient(ctx, r.Header.Get("X-UIGraph-Client-Name"), r.Header.Get("X-UIGraph-Client-Version"))
 			ctx = tools.WithStart(ctx, time.Now())
 			return ctx
@@ -65,8 +65,73 @@ func New(cfg *config.Config, client *apiclient.Client) http.Handler {
 	mux.HandleFunc("GET /auth/login", authH.Login)
 	mux.HandleFunc("GET /auth/callback", authH.Callback)
 	mux.HandleFunc("GET /auth/me", authH.Me)
-	mux.Handle("/", streamable)
+	mux.Handle("/", authenticateMCP(client, streamable))
 	return mux
+}
+
+func authenticateMCP(client *apiclient.Client, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, scheme := extractCredential(r)
+		if token == "" {
+			http.Error(w, "missing credentials", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := apiclient.WithScheme(r.Context(), scheme)
+		me, err := client.GetMe(ctx, token)
+		if err != nil {
+			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			return
+		}
+		if scheme == apiclient.SchemeAPIKey && me.Kind != "service_account" {
+			http.Error(w, "X-API-Key credentials must authenticate as a service account", http.StatusForbidden)
+			return
+		}
+		if scheme == apiclient.SchemeBearer && me.Kind != "user" {
+			http.Error(w, "Bearer credentials must authenticate as a user account", http.StatusForbidden)
+			return
+		}
+
+		orgID, err := authenticatedOrg(ctx, client, token, me, r.Header.Get("X-UIGraph-Org-Id"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+
+		ctx = tools.WithOrg(ctx, orgID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func authenticatedOrg(ctx context.Context, client *apiclient.Client, token string, me *apiclient.Me, requestedOrgID string) (string, error) {
+	if me.Kind == "service_account" {
+		if requestedOrgID != "" {
+			return "", fmt.Errorf("service accounts must not send X-UIGraph-Org-Id")
+		}
+		if me.OrgID == "" {
+			return "", fmt.Errorf("service account has no organization")
+		}
+		return me.OrgID, nil
+	}
+
+	if me.Kind != "user" {
+		return "", fmt.Errorf("unsupported authenticated identity kind")
+	}
+
+	if requestedOrgID == "" {
+		return "", fmt.Errorf("X-UIGraph-Org-Id is required for user accounts")
+	}
+
+	orgs, err := client.GetMyOrgs(ctx, token)
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve user organizations")
+	}
+	for _, org := range orgs {
+		if org.ID == requestedOrgID {
+			return requestedOrgID, nil
+		}
+	}
+	return "", fmt.Errorf("user does not have access to organization")
 }
 
 func toolResultText(res *mcp.CallToolResult) string {
