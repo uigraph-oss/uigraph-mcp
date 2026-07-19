@@ -27,3 +27,11 @@ func (c *Client) ListServiceDependencies(ctx context.Context, token, orgID, serv
 	err := c.get(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/services/%s/dependencies", orgID, serviceID), &resp)
 	return resp.Edges, err
 }
+
+func (c *Client) DependencyGraph(ctx context.Context, token, orgID string) ([]ServiceDependency, error) {
+	var resp struct {
+		Edges []ServiceDependency `json:"edges"`
+	}
+	err := c.get(ctx, token, fmt.Sprintf("/api/v1/orgs/%s/dependency-graph", orgID), &resp)
+	return resp.Edges, err
+}

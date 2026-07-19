@@ -10,6 +10,7 @@ func registerTools(s *mcpserver.MCPServer, client *apiclient.Client) {
 	h := tools.New(client)
 	h.RegisterUserTool(s)
 	h.RegisterCatalogTools(s)
+	h.RegisterDependencyTools(s)
 	h.RegisterFolderTools(s)
 	h.RegisterDiagramTools(s)
 	h.RegisterSchemaTools(s)
