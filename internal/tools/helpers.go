@@ -6,9 +6,33 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/uigraph/mcp/internal/apiclient"
 	"github.com/uigraph/mcp/internal/tokencount"
 )
+
+func requireUUID(req mcp.CallToolRequest, name string) (string, error) {
+	v, err := req.RequireString(name)
+	if err != nil {
+		return "", err
+	}
+	if err := uuid.Validate(v); err != nil {
+		return "", fmt.Errorf("%s must be a valid UUID, got %q", name, v)
+	}
+	return v, nil
+}
+
+func optionalUUID(req mcp.CallToolRequest, name string) (*string, error) {
+	v := req.GetString(name, "")
+	if v == "" {
+		return nil, nil
+	}
+	if err := uuid.Validate(v); err != nil {
+		return nil, fmt.Errorf("%s must be a valid UUID, got %q", name, v)
+	}
+	return &v, nil
+}
 
 type contextKey string
 

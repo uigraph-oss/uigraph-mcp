@@ -53,13 +53,13 @@ func (h *Handler) listServices(ctx context.Context, req mcp.CallToolRequest) (*m
 	}
 	token := tokenFromCtx(ctx)
 
-	var folderID *string
-	if fid := req.GetString("folder_id", ""); fid != "" {
-		folderID = &fid
+	folderID, err := optionalUUID(req, "folder_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
-	var teamID *string
-	if tid := req.GetString("team_id", ""); tid != "" {
-		teamID = &tid
+	teamID, err := optionalUUID(req, "team_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 	var search *string
 	if s := req.GetString("search_by_name", ""); s != "" {
@@ -95,7 +95,7 @@ func (h *Handler) getService(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -133,7 +133,7 @@ func (h *Handler) listAPIGroups(ctx context.Context, req mcp.CallToolRequest) (*
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -167,11 +167,11 @@ func (h *Handler) getAPISpec(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	apiGroupID, err := req.RequireString("api_group_id")
+	apiGroupID, err := requireUUID(req, "api_group_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -215,11 +215,11 @@ func (h *Handler) listEndpoints(ctx context.Context, req mcp.CallToolRequest) (*
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	apiGroupID, err := req.RequireString("api_group_id")
+	apiGroupID, err := requireUUID(req, "api_group_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

@@ -60,7 +60,7 @@ func (h *Handler) getMap(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	mapID, err := req.RequireString("map_id")
+	mapID, err := requireUUID(req, "map_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
