@@ -61,7 +61,7 @@ func (h *Handler) getDiagram(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	diagramID, err := req.RequireString("diagram_id")
+	diagramID, err := requireUUID(req, "diagram_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

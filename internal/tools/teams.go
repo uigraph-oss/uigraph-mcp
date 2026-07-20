@@ -57,7 +57,7 @@ func (h *Handler) getTeam(ctx context.Context, req mcp.CallToolRequest) (*mcp.Ca
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	teamID, err := req.RequireString("team_id")
+	teamID, err := requireUUID(req, "team_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

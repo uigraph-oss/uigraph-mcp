@@ -30,7 +30,7 @@ func (h *Handler) listServiceDBs(ctx context.Context, req mcp.CallToolRequest) (
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -61,11 +61,11 @@ func (h *Handler) getDBSchema(ctx context.Context, req mcp.CallToolRequest) (*mc
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	dbID, err := req.RequireString("db_id")
+	dbID, err := requireUUID(req, "db_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

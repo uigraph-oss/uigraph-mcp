@@ -32,8 +32,12 @@ func (h *Handler) listDocs(ctx context.Context, req mcp.CallToolRequest) (*mcp.C
 	}
 	token := tokenFromCtx(ctx)
 
-	if serviceID := req.GetString("service_id", ""); serviceID != "" {
-		docs, err := h.client.ListServiceDocs(ctx, token, orgID, serviceID)
+	serviceID, err := optionalUUID(req, "service_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	if serviceID != nil {
+		docs, err := h.client.ListServiceDocs(ctx, token, orgID, *serviceID)
 		if err != nil {
 			return mcp.NewToolResultError(err.Error()), nil
 		}
@@ -87,7 +91,7 @@ func (h *Handler) getDoc(ctx context.Context, req mcp.CallToolRequest) (*mcp.Cal
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	docID, err := req.RequireString("doc_id")
+	docID, err := requireUUID(req, "doc_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

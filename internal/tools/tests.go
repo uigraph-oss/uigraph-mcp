@@ -58,7 +58,7 @@ func (h *Handler) listTestPacks(ctx context.Context, req mcp.CallToolRequest) (*
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -88,7 +88,7 @@ func (h *Handler) getTestPack(ctx context.Context, req mcp.CallToolRequest) (*mc
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	testPackID, err := req.RequireString("test_pack_id")
+	testPackID, err := requireUUID(req, "test_pack_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -112,15 +112,15 @@ func (h *Handler) listTestCases(ctx context.Context, req mcp.CallToolRequest) (*
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	token := tokenFromCtx(ctx)
 
-	var testPackID *string
-	if v := req.GetString("test_pack_id", ""); v != "" {
-		testPackID = &v
+	testPackID, err := optionalUUID(req, "test_pack_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	cases, err := h.client.ListTestCases(ctx, token, orgID, serviceID, testPackID)
@@ -158,15 +158,15 @@ func (h *Handler) listTestRuns(ctx context.Context, req mcp.CallToolRequest) (*m
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	token := tokenFromCtx(ctx)
 
-	var testPackID *string
-	if v := req.GetString("test_pack_id", ""); v != "" {
-		testPackID = &v
+	testPackID, err := optionalUUID(req, "test_pack_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
 
 	runs, err := h.client.ListTestRuns(ctx, token, orgID, serviceID, testPackID)
@@ -198,11 +198,11 @@ func (h *Handler) getTestRun(ctx context.Context, req mcp.CallToolRequest) (*mcp
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	testRunID, err := req.RequireString("test_run_id")
+	testRunID, err := requireUUID(req, "test_run_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -230,16 +230,17 @@ func (h *Handler) listTestRunsSummary(ctx context.Context, req mcp.CallToolReque
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	token := tokenFromCtx(ctx)
 
-	var testPackID, environment, status *string
-	if v := req.GetString("test_pack_id", ""); v != "" {
-		testPackID = &v
+	testPackID, err := optionalUUID(req, "test_pack_id")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
 	}
+	var environment, status *string
 	if v := req.GetString("environment", ""); v != "" {
 		environment = &v
 	}
@@ -274,11 +275,11 @@ func (h *Handler) listTestRunResults(ctx context.Context, req mcp.CallToolReques
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	serviceID, err := req.RequireString("service_id")
+	serviceID, err := requireUUID(req, "service_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	testRunID, err := req.RequireString("test_run_id")
+	testRunID, err := requireUUID(req, "test_run_id")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
